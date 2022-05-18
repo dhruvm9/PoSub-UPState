@@ -12,7 +12,6 @@ import pandas as pd
 import scipy.io
 from functions import *
 from wrappers import *
-import ipyparallel
 import os, sys
 import neuroseries as nts 
 import time 
@@ -32,6 +31,7 @@ allcoefs_dn_ex = []
 durcoeffs_D = []
 durcoeffs_V = []
 allspeeds_dn_ex = []
+p_dn_ex = []
 allspeeds_fs = []
 allspeeds_dn = []
 
@@ -222,6 +222,7 @@ for s in datasets:
     #Plot for threshold crossing           
     coef_ex, p_ex = kendalltau(st_ex[ix_ex],depths_keeping_ex)
     allcoefs_dn_ex.append(coef_ex)
+    p_dn_ex.append(p_ex)
         
     stk_ex = st_ex[ix_ex]
     
@@ -268,12 +269,12 @@ for s in datasets:
  
 ####SPEED COMPUTATION 
 
-    y_est_ex = np.zeros(len(depths_keeping_ex))
-    m_ex, b_ex = np.polyfit(depths_keeping_ex.flatten(), stk_ex.values, 1)
+    y_est_ex = np.zeros(len(stk_ex.values))
+    m_ex, b_ex = np.polyfit(stk_ex.values, depths_keeping_ex.flatten(), 1)
     allspeeds_dn_ex.append(m_ex)
         
     for i in range(len(stk_ex)):
-        y_est_ex[i] = m_ex*depths_keeping_ex[i]
+        y_est_ex[i] = m_ex*stk_ex.values[i]
     
 
     # y_est_fs = np.zeros(len(stk_fs))
@@ -286,16 +287,16 @@ for s in datasets:
 
 ####PLOT        
     plt.figure()
-    # plt.scatter(depths_keeping_ex.flatten(), stk_ex.index.values, color = 'cornflowerblue', alpha = 0.8, label = 'R(ex) = ' + str(round(coef_ex,4)))
+    plt.scatter(stk_ex.values, depths_keeping_ex.flatten(), color = 'cornflowerblue', alpha = 0.8, label = 'R(ex) = ' + str(round(coef_ex,4)))
     # plt.scatter(stk_fs, depths_keeping_fs, alpha = 0.8, color = 'indianred')
-    # plt.plot(depths_keeping_ex, y_est_ex + b_ex, color = 'cornflowerblue')
+    plt.plot(stk_ex, y_est_ex + b_ex, color = 'cornflowerblue')
     # # plt.plot(stk_fs, y_est_fs + b_fs, color = 'orange')
-    sns.regplot(x = depths_keeping_ex.flatten(), y = stk_ex.values, ci = 95)
+    # sns.regplot(x = depths_keeping_ex.flatten(), y = stk_ex.values, ci = 95)
     plt.title('Last bin before DOWN where FR > 50% baseline rate_' + s)
     plt.xlabel('Depth from top of probe (um)')
-    plt.xticks([0, -400, -800])
-    plt.ylabel('Lag (ms)')
-    # plt.legend(loc = 'upper right')
+    plt.yticks([0, -400, -800])
+    plt.xlabel('Lag (ms)')
+    plt.legend(loc = 'upper right')
             
 #####Plot for duration
     # dur_ventral = data_ex[data_ex['level'] ==2].dur.values
@@ -349,25 +350,41 @@ for s in datasets:
 regs = pd.DataFrame()
 regs['corr'] = allcoefs_dn
 
+# ############################################################################################### 
+#     # CUMULATIVE LAG v/s DEPTH PLOT (Run adrian_hist_PETH_up before running this segment)
+# ###############################################################################################   
 
-# plt.figure()
-# plt.boxplot(allcoefs_up_ex, positions=[0], showfliers=False, patch_artist=True, boxprops=dict(facecolor='royalblue', color='royalblue'),
-#              capprops=dict(color='royalblue'),
-#              whiskerprops=dict(color='royalblue'),
-#              medianprops=dict(color='white', linewidth = 2))
-# plt.boxplot(allcoefs_dn_ex, positions=[0.3], showfliers=False, patch_artist=True, boxprops=dict(facecolor='lightsteelblue', color='lightsteelblue'),
-#              capprops=dict(color='lightsteelblue'),
-#              whiskerprops=dict(color='lightsteelblue'),
-#              medianprops=dict(color='white', linewidth = 2))
+a = pd.DataFrame()
+a['allcoefs_up_ex'] = allcoefs_up_ex
+a['pval_up_ex'] = pvals_ex
+a['allcoefs_dn_ex'] = allcoefs_dn_ex
+a['pval_dn_ex'] = p_dn_ex
 
-# x1 = np.random.normal(0, 0.01, size=len(allcoefs_up_ex))
-# x2 = np.random.normal(0.3, 0.01, size=len(allcoefs_dn_ex))
-# plt.plot(x1, allcoefs_up_ex, '.', color = 'k', fillstyle = 'none', markersize = 8, zorder =3)
-# plt.plot(x2, allcoefs_dn_ex, '.', color = 'k', fillstyle = 'none', markersize = 8, zorder =3)
-# plt.axhline(0, color = 'silver')
-# plt.xticks([0, 0.3],['DOWN-UP', 'UP-DOWN'])
-# plt.title('Sequential activation of Ex cells')
-# plt.ylabel('Tau value')
+plt.figure()
+plt.boxplot(allcoefs_up_ex, positions=[0], showfliers=False, patch_artist=True, boxprops=dict(facecolor='royalblue', color='royalblue'),
+              capprops=dict(color='royalblue'),
+              whiskerprops=dict(color='royalblue'),
+              medianprops=dict(color='white', linewidth = 2))
+plt.boxplot(allcoefs_dn_ex, positions=[0.3], showfliers=False, patch_artist=True, boxprops=dict(facecolor='lightsteelblue', color='lightsteelblue'),
+              capprops=dict(color='lightsteelblue'),
+              whiskerprops=dict(color='lightsteelblue'),
+              medianprops=dict(color='white', linewidth = 2))
+
+x1 = np.random.normal(0, 0.01, size=len(a['allcoefs_up_ex'][a['pval_up_ex'] > 0.05]))
+x2 = np.random.normal(0.3, 0.01, size=len(a['allcoefs_dn_ex'][a['pval_dn_ex'] > 0.05]))
+x3 = np.random.normal(0, 0.01, size=len(a['allcoefs_up_ex'][a['pval_up_ex'] < 0.05]))
+x4 = np.random.normal(0.3, 0.01, size=len(a['allcoefs_dn_ex'][a['pval_dn_ex'] < 0.05]))
+
+plt.plot(x1, a['allcoefs_up_ex'][a['pval_up_ex'] > 0.05], '.', color = 'k', fillstyle = 'none', markersize = 6, zorder =3)
+plt.plot(x2, a['allcoefs_dn_ex'][a['pval_dn_ex'] > 0.05], '.', color = 'k', fillstyle = 'none', markersize = 6, zorder =3)
+plt.plot(x3, a['allcoefs_up_ex'][a['pval_up_ex'] < 0.05], 'x', color = 'k', fillstyle = 'none', markersize = 6, zorder =3)
+plt.plot(x4, a['allcoefs_dn_ex'][a['pval_dn_ex'] < 0.05], 'x', color = 'k', fillstyle = 'none', markersize = 6, zorder =3)
+plt.axhline(0, color = 'silver')
+plt.xticks([0, 0.3],['DOWN-UP', 'UP-DOWN'])
+plt.title('Sequential activation of Ex cells')
+plt.ylabel('Tau value')
+
+# ############################################################################################### 
 
 
 # z_dn_D, p_dn_D = wilcoxon(np.array(durcoeffs_D)-0)

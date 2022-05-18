@@ -12,7 +12,6 @@ import pandas as pd
 import scipy.io
 from functions import *
 from wrappers import *
-import ipyparallel
 import os, sys
 import neuroseries as nts 
 import time 
@@ -143,33 +142,33 @@ for s in datasets:
     ff = dd[interneuron]
        
 #######All cells 
-    # if len(dd.columns) > 0:
-    #     indexplot = []
-    #     depths_keeping = []
+    if len(dd.columns) > 0:
+        indexplot = []
+        depths_keeping = []
         
-    # for i in range(len(dd.columns)):
-    #     a = np.where(dd.iloc[:,i] > 0.5)
+    for i in range(len(dd.columns)):
+        a = np.where(dd.iloc[:,i] > 0.5)
             
-    #     if len(a[0]) > 0:
-    #         depths_keeping.append(depth.flatten()[dd.columns[i]])
-    #         res = dd.iloc[:,i].index[a]
-    #         indexplot.append(res[0])
+        if len(a[0]) > 0:
+            depths_keeping.append(depth.flatten()[dd.columns[i]])
+            res = dd.iloc[:,i].index[a]
+            indexplot.append(res[0])
            
-    # coef, p = kendalltau(indexplot,depths_keeping)
-    # pvals.append(p)
-    # allcoefs_up.append(coef)
+    coef, p = kendalltau(indexplot,depths_keeping)
+    pvals.append(p)
+    allcoefs_up.append(coef)
     
 ####ALL CELLS SPEED
 
     
     
 
-    # y_est = np.zeros(len(indexplot))
-    # m, b = np.polyfit(indexplot, depths_keeping, 1)
-    # allspeeds_up.append(m/10)
+    y_est = np.zeros(len(indexplot))
+    m, b = np.polyfit(indexplot, depths_keeping, 1)
+    allspeeds_up.append(m)
         
-    # for i in range(len(indexplot)):
-    #     y_est[i] = m*indexplot[i]
+    for i in range(len(indexplot)):
+        y_est[i] = m*indexplot[i]
         
         
 #######Ex cells 
@@ -211,18 +210,18 @@ for s in datasets:
             
         
     #     #Latency v/s depth 
-    #     coef_fs, p_fs = kendalltau(indexplot_fs,depths_keeping_fs)
+        # coef_fs, p_fs = kendalltau(indexplot_fs,depths_keeping_fs)
             
-    #     allcoefs_up_fs.append(coef_fs)
+        # allcoefs_up_fs.append(coef_fs)
         
         ###SPEED 
         
         y_est_ex = np.zeros(len(depths_keeping_ex))
-        m_ex, b_ex = np.polyfit(depths_keeping_ex, indexplot_ex, 1)
+        m_ex, b_ex = np.polyfit(indexplot_ex, depths_keeping_ex, 1)
         allspeeds_up_ex.append(m_ex)
         
-        for i in range(len(depths_keeping_ex)):
-            y_est_ex[i] = m_ex*depths_keeping_ex[i]
+        for i in range(len(indexplot_ex)):
+            y_est_ex[i] = m_ex*indexplot_ex[i]
             
         # ##FS cells speed
         
@@ -235,15 +234,15 @@ for s in datasets:
             
     ###PLOTS
     plt.figure()
-    # plt.scatter(depths_keeping_ex, indexplot_ex, color = 'cornflowerblue')
+    plt.scatter(indexplot_ex, depths_keeping_ex, color = 'cornflowerblue')
     # plt.scatter(indexplot_fs,depths_keeping_fs, alpha = 0.8, color = 'indianred')
-    # plt.plot(depths_keeping_ex, y_est_ex + b_ex, color = 'cornflowerblue')
+    plt.plot(indexplot_ex, y_est_ex + b_ex, color = 'cornflowerblue')
     # plt.plot(indexplot_fs, y_est_fs + b_fs, color = 'orange')
-    sns.regplot(x = depths_keeping_ex, y = indexplot_ex, ci = 95)
+    # sns.regplot(x = depths_keeping_ex, y = indexplot_ex, ci = 95)
     plt.title('Bin where FR > 50% baseline rate_' + s)
-    plt.xlabel('Depth from top of probe (um)')
-    plt.xticks([0, -400, -800])
-    plt.ylabel('Lag (ms)')
+    plt.ylabel('Depth from top of probe (um)')
+    plt.yticks([0, -400, -800])
+    plt.xlabel('Lag (ms)')
   
         
         # sys.exit()
@@ -251,53 +250,43 @@ for s in datasets:
 
 # Out of loop 
 
-# z_up, p_up = wilcoxon(np.array(allcoefs_up)-0)
+z_up, p_up = wilcoxon(np.array(allcoefs_up)-0)
 z_up_ex, p_up_ex = wilcoxon(np.array(allcoefs_up_ex)-0)
 # z_up_fs, p_up_fs = wilcoxon(np.array(allcoefs_up_fs)-0)
 
 # np.save('allspeeds_up_ex.npy', allspeeds_up_ex)
 # np.save('allcoefs_up_ex.npy', allcoefs_up_ex)
-# speedmag_up = [x * -1 for x in allspeeds_up]
-# speedmag_ex = [abs(x) for x in allspeeds_up_ex]
-# speedmag_up = [abs(x)  for x in allspeeds_up]
+speedmag_up = [x * -1 for x in allspeeds_up_ex]
+speedmag_ex = [abs(x) for x in allspeeds_up_ex]
+speedmag_up = [abs(x)  for x in allspeeds_up]
 
 regs = pd.DataFrame()
-# regs['corr'] = allcoefs_up
-# regs['pval'] = pvals
-# regs['vel'] = speedmag_up
+regs['corr'] = allcoefs_up
+regs['pval'] = pvals
+regs['vel'] = speedmag_up
 regs['corr_ex'] = allcoefs_up_ex
 regs['pval_ex'] = pvals_ex
-# regs['vel_ex'] = speedmag_ex
+regs['spd_ex'] = speedmag_ex
 regs['vel_ex'] = allspeeds_up_ex
 
-# plt.figure()
-# plt.hist([regs['corr_ex'][regs['pval_ex'] < 0.05], regs['corr_ex'][regs['pval_ex'] >= 0.05]], label = ['p < 0.05', 'p >= 0.05'], stacked = True, color = ['darkslategray','cadetblue'], linewidth = 2)
-# plt.legend(loc = 'upper right')
-# plt.xlabel('Tau value')
-# plt.yticks([0,1,2,3,4])
-# plt.ylabel('Number of sessions')
+plt.figure()
+plt.hist([regs['corr_ex'][regs['pval_ex'] < 0.05], regs['corr_ex'][regs['pval_ex'] >= 0.05]], label = ['p < 0.05', 'p >= 0.05'], stacked = True, color = ['darkslategray','cadetblue'], linewidth = 2)
+plt.legend(loc = 'upper right')
+plt.xlabel('Tau value')
+plt.yticks([0,1,2,3,4])
+plt.ylabel('Number of sessions')
 
 plt.figure()
-plt.boxplot(regs['vel_ex'][regs['pval_ex'] < 0.05], positions = [0], showfliers= False, patch_artist=True,boxprops=dict(facecolor='darkslategray', color='darkslategray'),
+plt.boxplot(regs['spd_ex'][regs['pval_ex'] < 0.05], positions = [0], showfliers= False, patch_artist=True,boxprops=dict(facecolor='darkslategray', color='darkslategray'),
             capprops=dict(color='darkslategray'),
             whiskerprops=dict(color='darkslategray'),
             medianprops=dict(color='white', linewidth = 2))
 x1 = np.random.normal(0, 0.01, size=len(regs['vel_ex'][regs['pval_ex'] < 0.05]))
-plt.plot(x1, regs['vel_ex'][regs['pval_ex'] < 0.05] , '.', color = 'k', fillstyle = 'none', markersize = 8, zorder =3)
+plt.plot(x1, regs['spd_ex'][regs['pval_ex'] < 0.05] , '.', color = 'k', fillstyle = 'none', markersize = 8, zorder =3)
 plt.ylabel('Speed (mm/s)')
 plt.xticks([])
 plt.title('DU speed')
 
-plt.figure()
-plt.boxplot(regs['vel_ex'], positions = [0], showfliers= False, patch_artist=True,boxprops=dict(facecolor='darkslategray', color='darkslategray'),
-            capprops=dict(color='darkslategray'),
-            whiskerprops=dict(color='darkslategray'),
-            medianprops=dict(color='white', linewidth = 2))
-x1 = np.random.normal(0, 0.01, size=len(regs['vel_ex']))
-plt.plot(x1, regs['vel_ex'], '.', color = 'k', fillstyle = 'none', markersize = 8, zorder =3)
-plt.ylabel('1/Speed (s/mm)')
-plt.xticks([])
-plt.title('DU speed')
 
 # plt.figure()
 # plt.boxplot(allcoefs_up_ex, positions=[0], showfliers=False, patch_artist=True, boxprops=dict(facecolor='cornflowerblue', color='cornflowerblue'),
@@ -319,22 +308,22 @@ plt.title('DU speed')
 # plt.ylabel('Tau value')
 
 
-plt.figure()
-plt.boxplot(regs['vel_ex'], positions=[0], showfliers=False, patch_artist=True, boxprops=dict(facecolor='cornflowerblue', color='cornflowerblue'),
-            capprops=dict(color='cornflowerblue'),
-            whiskerprops=dict(color='cornflowerblue'),
-            medianprops=dict(color='white', linewidth = 2))
-plt.boxplot(allspeeds_dn_ex, positions=[0.3], showfliers=False, patch_artist=True, boxprops=dict(facecolor='indianred', color='indianred'),
-            capprops=dict(color='indianred'),
-            whiskerprops=dict(color='indianred'),
-            medianprops=dict(color='white', linewidth = 2))
+# plt.figure()
+# plt.boxplot(regs['vel_ex'], positions=[0], showfliers=False, patch_artist=True, boxprops=dict(facecolor='cornflowerblue', color='cornflowerblue'),
+#             capprops=dict(color='cornflowerblue'),
+#             whiskerprops=dict(color='cornflowerblue'),
+#             medianprops=dict(color='white', linewidth = 2))
+# plt.boxplot(allspeeds_dn_ex, positions=[0.3], showfliers=False, patch_artist=True, boxprops=dict(facecolor='indianred', color='indianred'),
+#             capprops=dict(color='indianred'),
+#             whiskerprops=dict(color='indianred'),
+#             medianprops=dict(color='white', linewidth = 2))
 
-x1 = np.random.normal(0, 0.01, size=len(regs['vel_ex']))
-x2 = np.random.normal(0.3, 0.01, size=len(allspeeds_dn_ex))
-plt.plot(x1, regs['vel_ex'], '.', color = 'k', fillstyle = 'none', markersize = 8, zorder =3)
-plt.plot(x2, allspeeds_dn_ex, '.', color = 'k', fillstyle = 'none', markersize = 8, zorder =3)
-plt.axhline(0, color = 'silver')
-plt.xticks([0, 0.3],['DU', 'UD'])
-plt.title('Slope distribution')
-plt.ylabel('1/speed (s/mm)')
+# x1 = np.random.normal(0, 0.01, size=len(regs['vel_ex']))
+# x2 = np.random.normal(0.3, 0.01, size=len(allspeeds_dn_ex))
+# plt.plot(x1, regs['vel_ex'], '.', color = 'k', fillstyle = 'none', markersize = 8, zorder =3)
+# plt.plot(x2, allspeeds_dn_ex, '.', color = 'k', fillstyle = 'none', markersize = 8, zorder =3)
+# plt.axhline(0, color = 'silver')
+# plt.xticks([0, 0.3],['DU', 'UD'])
+# plt.title('Slope distribution')
+# plt.ylabel('1/speed (s/mm)')
 

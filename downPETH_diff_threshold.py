@@ -19,7 +19,6 @@ import pandas as pd
 import scipy.io
 from functions import *
 from wrappers import *
-import ipyparallel
 import os, sys
 import neuroseries as nts 
 import time 
@@ -293,30 +292,30 @@ plt.ylabel('Number of sessions')
 plt.legend(loc = 'upper right')  
 
 
-# z_dn_ex, p_dn_ex = wilcoxon(np.array(durcoeffs_ex)-0)
-# z_dn_fs, p_dn_fs = wilcoxon(np.array(durcoeffs_fs)-0)
-# # bins = np.linspace(min(min(durcoeffs_ex), min(durcoeffs_fs)),max(max(durcoeffs_ex), max(durcoeffs_fs)),20)
+z_dn_ex, p_dn_ex = wilcoxon(np.array(durcoeffs_ex)-0)
+z_dn_fs, p_dn_fs = wilcoxon(np.array(durcoeffs_fs)-0)
+# bins = np.linspace(min(min(durcoeffs_ex), min(durcoeffs_fs)),max(max(durcoeffs_ex), max(durcoeffs_fs)),20)
 
-# plt.figure()
-# plt.hist(durcoeffs_ex, label = 'p-value =' + str(round(p_dn_ex,4)))
-# plt.axvline(np.mean(durcoeffs_ex),color = 'k')
-# # plt.hist(durcoeffs_fs, bins, alpha = 0.5, label = 'p-value (FS) =' + str(round(p_dn_fs,4)))
-# plt.title('Distribution of Kendall Tau for DOWN-duration (ex cells)')
-# plt.xlabel('Kendall tau value') 
-# plt.ylabel('Number of sessions')
-# plt.legend(loc = 'upper right')  
+plt.figure()
+plt.hist(durcoeffs_ex, label = 'p-value =' + str(round(p_dn_ex,4)))
+plt.axvline(np.mean(durcoeffs_ex),color = 'k')
+# plt.hist(durcoeffs_fs, bins, alpha = 0.5, label = 'p-value (FS) =' + str(round(p_dn_fs,4)))
+plt.title('Distribution of Kendall Tau for DOWN-duration (ex cells)')
+plt.xlabel('Kendall tau value') 
+plt.ylabel('Number of sessions')
+plt.legend(loc = 'upper right')  
 
 
-# z_spd_ex, p_spd_ex = wilcoxon(np.array(allspeeds_ex)-0)
-# z_spd_fs, p_spd_fs = wilcoxon(np.array(allspeeds_fs)-0)
-# bins = np.linspace(min(min(allspeeds_ex), min(allspeeds_fs)),max(max(allspeeds_ex), max(allspeeds_fs)),20)
-# plt.figure()
-# plt.hist(allspeeds_ex,bins, alpha = 0.5, label = 'Mean = ' + str(round(np.mean(allspeeds_ex),4)))
-# plt.hist(allspeeds_fs,bins, alpha = 0.5, label = 'Mean = ' + str(round(np.mean(allspeeds_fs),4)))
-# plt.title('Speed of DOWN propagation')
-# plt.xlabel('Speed (cm/s)') 
-# plt.ylabel('Number of sessions')
-# plt.legend(loc = 'upper right')          
+z_spd_ex, p_spd_ex = wilcoxon(np.array(allspeeds_ex)-0)
+z_spd_fs, p_spd_fs = wilcoxon(np.array(allspeeds_fs)-0)
+bins = np.linspace(min(min(allspeeds_ex), min(allspeeds_fs)),max(max(allspeeds_ex), max(allspeeds_fs)),20)
+plt.figure()
+plt.hist(allspeeds_ex,bins, alpha = 0.5, label = 'Mean = ' + str(round(np.mean(allspeeds_ex),4)))
+plt.hist(allspeeds_fs,bins, alpha = 0.5, label = 'Mean = ' + str(round(np.mean(allspeeds_fs),4)))
+plt.title('Speed of DOWN propagation')
+plt.xlabel('Speed (cm/s)') 
+plt.ylabel('Number of sessions')
+plt.legend(loc = 'upper right')          
 
 
 #Raster and LFP code 

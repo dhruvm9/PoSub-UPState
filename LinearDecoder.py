@@ -10,6 +10,7 @@ from torch import nn
 from torch.utils.data import Dataset
 from torch.utils.data import DataLoader
 import numpy as np
+import pickle 
 
 
 class linearDecoder:
@@ -122,7 +123,20 @@ class linearDecoder:
         steploss = loss.item()
         return steploss
 
+    def save(self,decodername,savefolder):
+        
+        filename = 'lineardecoder_'+decodername
+        filepath = savefolder+filename
+        with open(filepath, 'wb') as f:
+            pickle.dump(self, f)
 
+
+    def load(self,decodername,loadfolder):
+        
+        filename = 'lineardecoder_' + decodername
+        filepath = loadfolder + filename
+        with open(filepath, 'rb') as f:
+            return pickle.load(f)
 
 
 ###############################################################################

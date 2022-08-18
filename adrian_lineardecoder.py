@@ -149,7 +149,7 @@ for i in errs:
     
 #%%
 fig, ax = plt.subplots(1,1)
-img = ax.imshow(errs.T,extent=[min(errs.index),max(errs.index),max(errs.columns),min(errs.columns)],aspect = 'auto', origin = 'lower')
+img = ax.imshow(errs.T,extent=[min(errs.index),max(errs.index),min(errs.columns),max(errs.columns)],aspect = 'auto', origin = 'lower')
 
 ax.set_yticks(errs.columns.tolist(), labels=errs.columns.tolist())
 ax.set_xticks(errs.index.tolist(), labels=errs.index.tolist())

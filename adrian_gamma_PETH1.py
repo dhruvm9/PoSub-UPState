@@ -5,13 +5,7 @@ Created on Wed May 18 14:07:59 2022
 
 @author: dhruv
 """
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Created on Wed Apr 13 17:22:56 2022
 
-@author: dhruv
-"""
 import numpy as np 
 import pandas as pd 
 import scipy.io
@@ -29,8 +23,8 @@ from scipy.signal import hilbert
 import matplotlib.cm as cm
 
 data_directory = '/media/DataDhruv/Dropbox (Peyrache Lab)/Peyrache Lab Team Folder/Data/AdrianPoSub/###AllPoSub'
-datasets = np.loadtxt(os.path.join(data_directory,'dataset_Hor_DM.list'), delimiter = '\n', dtype = str, comments = '#')
-# datasets = np.loadtxt(os.path.join(data_directory,'dataset_test.list'), delimiter = '\n', dtype = str, comments = '#')
+# datasets = np.loadtxt(os.path.join(data_directory,'dataset_Hor_DM.list'), delimiter = '\n', dtype = str, comments = '#')
+datasets = np.loadtxt(os.path.join(data_directory,'dataset_test.list'), delimiter = '\n', dtype = str, comments = '#')
 rwpath = '/media/DataDhruv/Dropbox (Peyrache Lab)/Peyrache Lab Team Folder/Projects/PoSub-UPstate/Data'
 
 mediancorr = []
@@ -108,7 +102,15 @@ for s in datasets:
         
         a = power_gamma.index[power_gamma.index.get_indexer(peaks.index.values, method='nearest')]
         
+        #%%
+        test = nap.compute_perievent(nap.Tsd(pgs),nap.Tsd(peaks.index.values), minmax = (-1,1), time_unit='s')
         
+        
+        
+        
+        
+        
+        #%%
         gammaPETH = nap.compute_perievent(nap.Tsd(pgs), nap.Ts(a.values), minmax = (-1, 1), time_unit = 's')
         
         tmp = []

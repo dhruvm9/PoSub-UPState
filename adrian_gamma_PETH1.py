@@ -99,7 +99,7 @@ for s in datasets:
         med[j] = np.median(power_gamma.restrict(new_sws_ep).values)
         
         del lfp_filt_gamma
-        Fhsac
+        
         pgs = power_gamma.as_series()
         pgs = pgs.rolling(window=20,win_type='gaussian',center=True,min_periods=1).mean(std=80)
         

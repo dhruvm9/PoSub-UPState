@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Wed Aug 17 17:11:01 2022
+Created on Mon Aug 22 12:16:50 2022
 
 @author: dhruv
 """
@@ -14,8 +14,6 @@ import pandas as pd
 import scipy.io
 import pingouin as pg 
 import matplotlib.pyplot as plt
-
-#Load the data (from NWB)
 
 #%% On lab PC
 
@@ -74,25 +72,6 @@ centre_bins = 0.5 * (HDbinedges[0:-1] + HDbinedges[1:])
 
 sleep_activity = spikes.count(sleep_dt, new_sws_ep)
 sleep_activity = sleep_activity.as_dataframe().rolling(5, min_periods = 1, center = True, axis = 0).sum() #25 ms bins for sleep
-    
-#%%
-        
-#Plot data
-# plt.figure()
-
-# plt.subplot(2,1,1)
-# #Pynapple Question: do we want this to pull timestamps, like plot?
-# plt.imshow(rates.T, aspect='auto')  
-# plt.ylabel('Cell')
-
-# plt.subplot(2,1,2)
-# plt.plot(train_HD)
-# plt.plot(test_HD)
-
-# plt.xlabel('t (s)')
-# plt.ylabel('HD (bin)')
-
-# plt.show()
 
 #%%
 #Decode HD from test set
@@ -117,64 +96,66 @@ wtavg = np.mod(wtavg, 2*np.pi)
 
 poprate = sleep_activity.sum(axis=1)
 poprate = poprate/max(poprate)
-        
+
 #%%
 
-start = new_sws_ep['start'].values[0]
-ends = new_sws_ep['end'].values[0]
-
-q = pd.DataFrame(index = sleep_activity.index.values, data = p)
+p_x = pd.DataFrame(index = sleep_activity.index.values, data = p)
 MRL = nap.Tsd(t = sleep_activity.index.values, d = MRL)
 wtavg = nap.Tsd(t = sleep_activity.index.values, d = wtavg)
 poprate = nap.Tsd(t = sleep_activity.index.values, d = poprate)
 
-MRL_thresholded = MRL.threshold(0.25)
-wtavg_toShow = nap.Tsd(t = sleep_activity.index.values, d = wtavg[MRL_thresholded.index.values])
+#%%
+peri_du = {}
 
-q = q[start:ends]
+for i in range(len(new_sws_ep)):
+    mrlvec = MRL.restrict(new_sws_ep.loc[[i]])
+    du = nap.Ts(up_ep['start'].values).restrict(new_sws_ep.loc[[i]])
+       
+    MRL_PETH = nap.compute_perievent(mrlvec, du , minmax = (-0.3, 0.3), time_unit = 's')
+    tmp = []
 
-upons = up_ep['start'].values[(up_ep['start'].values >= start) & (up_ep['start'].values <= ends)]
-upoffs = up_ep['end'].values[(up_ep['end'].values >= start) & (up_ep['end'].values <= ends)]
+    for j in range(len(MRL_PETH)):
+        if len(MRL_PETH[j]) >= 120:
+            tmp.append(MRL_PETH[j].as_series())
+        
+    tmp = pd.concat(tmp, axis = 1, join = 'inner')
+    tmp = tmp.mean(axis = 1)  
+    peri_du[i] = pd.Series(data = tmp, name = i)    
+
+du_peth_all = pd.DataFrame(index = peri_du[0].index.values)
+
+for i in range(len(new_sws_ep)):
+    du_peth_all = pd.concat([du_peth_all, peri_du[i]], axis = 1)
 
 plt.figure()
-plt.imshow(q.T, aspect='auto',interpolation='none', extent = [start,ends,HDbinedges[0],HDbinedges[-1]], origin='lower')
-plt.plot(wtavg_toShow[start:ends],'r')
-plt.plot(MRL[start:ends],'w')
-plt.plot(poprate[start:ends], 'g')
+plt.imshow(du_peth_all.T, aspect='auto', extent = [du_peth_all.index[0],du_peth_all.index[-1],du_peth_all.columns[0],du_peth_all.columns[-1]], origin='lower')
+plt.colorbar()
 
-for pos in range(len(upons)):
-    plt.axvline(upons[pos], color='m')
-    plt.axvline(upoffs[pos], color='c')
-    
+#%%
+peri_ud = {}
+
+for i in range(len(new_sws_ep)):
+    mrlvec = MRL.restrict(new_sws_ep.loc[[i]])
+    ud = nap.Ts(down_ep['start'].values).restrict(new_sws_ep.loc[[i]])
+       
+    MRL_PETH = nap.compute_perievent(mrlvec, ud , minmax = (-0.3, 0.3), time_unit = 's')
+    tmp = []
+
+    for j in range(len(MRL_PETH)):
+        if len(MRL_PETH[j]) >= 120:
+            tmp.append(MRL_PETH[j].as_series())
+        
+    tmp = pd.concat(tmp, axis = 1, join = 'inner')
+    tmp = tmp.mean(axis = 1)  
+    peri_ud[i] = pd.Series(data = tmp, name = i)    
+
+ud_peth_all = pd.DataFrame(index = peri_du[0].index.values)
+
+for i in range(len(new_sws_ep)):
+    ud_peth_all = pd.concat([ud_peth_all, peri_ud[i]], axis = 1)
+
+plt.figure()
+plt.imshow(ud_peth_all.T, aspect='auto', extent = [ud_peth_all.index[0],ud_peth_all.index[-1],ud_peth_all.columns[0],du_peth_all.columns[-1]], origin='lower')
 plt.colorbar()
 
 
-
-#%%
-
-(ratecounts,mrlbins,ratebins) = np.histogram2d(MRL,poprate,bins=[30,30],
-                                                 range=[[0,1],[0,0.8]])
-
-#conditional Distribution 
-
-# P_rate_MRL = ratecounts/np.sum(ratecounts,axis=0)
-
-P_MRL_rate = ratecounts/np.sum(ratecounts,axis=0)
-plt.figure()
-plt.imshow(P_MRL_rate, origin='lower', extent = [ratebins[0],ratebins[-1],mrlbins[0],mrlbins[-1]],
-                                               aspect='auto',vmax=0.2)
-plt.ylabel('MRL')
-plt.xlabel('Population rate')
-
-
-#Joint Distribution
-
-plt.figure()
-plt.imshow(ratecounts, origin='lower', extent = [mrlbins[0],mrlbins[-1],
-                                                  ratebins[0],ratebins[-1]],
-            aspect='auto')
-plt.xlabel('MRL')
-plt.ylabel('Population rate')
-
-
-#%%

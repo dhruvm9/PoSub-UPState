@@ -5,7 +5,7 @@ Created on Mon Aug 22 12:16:50 2022
 
 @author: dhruv
 """
-
+#Here: change path to where it needs to be
 from LinearDecoder import linearDecoder
 import numpy as np
 import pynapple as nap
@@ -105,31 +105,81 @@ wtavg = nap.Tsd(t = sleep_activity.index.values, d = wtavg)
 poprate = nap.Tsd(t = sleep_activity.index.values, d = poprate)
 
 #%%
-peri_du = {}
+def perievent_Tsd(data, tref,  minmax=(-0.5,0.5)):
+    peth = {}
+    tmp = nap.compute_perievent(data, tref , minmax = (-0.5, 0.5), time_unit = 's')
+    peth_all = []
+    for j in range(len(tmp)):
+        if len(tmp[j]) >= 200: #TODO: Fix this - don't hard code
+            peth_all.append(tmp[j].as_series())
+    peth['all'] = pd.concat(peth_all, axis = 1, join = 'outer')
+    peth['mean'] = peth['all'].mean(axis = 1)
+    return peth
 
-for i in range(len(new_sws_ep)):
-    mrlvec = MRL.restrict(new_sws_ep.loc[[i]])
-    du = nap.Ts(up_ep['start'].values).restrict(new_sws_ep.loc[[i]])
+#%%
+
+DU = nap.Ts(up_ep['start'].values)
+DU_peth = perievent_Tsd(MRL, DU)
+DU_rate_peth = perievent_Tsd(poprate, DU)
+
+UD = nap.Ts(down_ep['start'].values)
+UD_peth = perievent_Tsd(MRL, UD)
+UD_rate_peth = perievent_Tsd(poprate, UD)
+
+#%%
+
+def pethFigure(peth,ratepeth):
+    plt.figure(figsize=(10,8))
+    plt.subplot(2,2,1)
+    plt.imshow(peth['all'].T, aspect='auto', origin='lower', resample=False,
+               extent = [peth['all'].index[0],peth['all'].index[-1],
+                         peth['all'].columns[0],peth['all'].columns[-1]])
+    plt.colorbar()
+    plt.ylabel('DU index')
+    
+    
+    ax = plt.subplot(4,2,5)
+    ax.plot(peth['mean'],color='b')
+    ax.set_ylabel('mean mrl')
+    ax2 = ax.twinx()
+    ax2.plot(ratepeth['mean'],color='r')
+    plt.xlabel('t - relative to DU (s)')
+    ax2.set_ylabel('Pop Rate')
+    plt.show()
+    
+    
+#%%
+
+pethFigure(DU_peth,DU_rate_peth)
+pethFigure(UD_peth,UD_rate_peth)
+#%%
+# peri_du = {}
+# tmp = []
+# for i in range(len(new_sws_ep)): #switch with enumerate
+#     mrlvec = MRL.restrict(new_sws_ep.loc[[i]])
+#     du = nap.Ts(up_ep['start'].values).restrict(new_sws_ep.loc[[i]])
        
-    MRL_PETH = nap.compute_perievent(mrlvec, du , minmax = (-0.3, 0.3), time_unit = 's')
-    tmp = []
+#     MRL_PETH = nap.compute_perievent(mrlvec, du , minmax = (-0.3, 0.3), time_unit = 's')
+    
 
-    for j in range(len(MRL_PETH)):
-        if len(MRL_PETH[j]) >= 120:
-            tmp.append(MRL_PETH[j].as_series())
+#     for j in range(len(MRL_PETH)):
+#         if len(MRL_PETH[j]) >= 120:
+#             tmp.append(MRL_PETH[j].as_series())
         
-    tmp = pd.concat(tmp, axis = 1, join = 'inner')
-    tmp = tmp.mean(axis = 1)  
-    peri_du[i] = pd.Series(data = tmp, name = i)    
 
-du_peth_all = pd.DataFrame(index = peri_du[0].index.values)
+      
+#     peri_du[i] = pd.Series(data = tmp, name = i)    
 
-for i in range(len(new_sws_ep)):
-    du_peth_all = pd.concat([du_peth_all, peri_du[i]], axis = 1)
+# tmp = pd.concat(tmp, axis = 1, join = 'inner')
+# tmp = tmp.mean(axis = 1)
+# du_peth_all = pd.DataFrame(index = tmp)
 
-plt.figure()
-plt.imshow(du_peth_all.T, aspect='auto', extent = [du_peth_all.index[0],du_peth_all.index[-1],du_peth_all.columns[0],du_peth_all.columns[-1]], origin='lower')
-plt.colorbar()
+# for i in range(len(new_sws_ep)):
+#     du_peth_all = pd.concat([du_peth_all, peri_du[i]], axis = 1)
+
+# plt.figure()
+# plt.imshow(du_peth_all.T, aspect='auto', extent = [du_peth_all.index[0],du_peth_all.index[-1],du_peth_all.columns[0],du_peth_all.columns[-1]], origin='lower')
+# plt.colorbar()
 
 #%%
 peri_ud = {}

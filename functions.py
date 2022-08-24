@@ -481,7 +481,7 @@ def butter_bandpass_filter(data, lowcut, highcut, fs, order=5):
     return y
 
 def downsample(tsd, up, down):
-    import scipy.signal
+    # import scipy.signal
     import pynapple as nap
 #     import neuroseries as nts
     dtsd = scipy.signal.resample_poly(tsd.values, up, down)

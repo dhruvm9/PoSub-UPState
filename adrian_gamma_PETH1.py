@@ -26,6 +26,21 @@ data_directory = '/media/DataDhruv/Dropbox (Peyrache Lab)/Peyrache Lab Team Fold
 # datasets = np.loadtxt(os.path.join(data_directory,'dataset_Hor_DM.list'), delimiter = '\n', dtype = str, comments = '#')
 datasets = np.loadtxt(os.path.join(data_directory,'dataset_test.list'), delimiter = '\n', dtype = str, comments = '#')
 rwpath = '/media/DataDhruv/Dropbox (Peyrache Lab)/Peyrache Lab Team Folder/Projects/PoSub-UPstate/Data'
+#%%
+def perievent_Tsd(data, tref,  minmax):
+    peth = {}
+    
+    a = data.index[data.index.get_indexer(tref.index.values, method='nearest')]
+    
+    tmp = nap.compute_perievent(data, nap.Ts(a.values) , minmax = minmax, time_unit = 's')
+    peth_all = []
+    for j in range(len(tmp)):
+        #if len(tmp[j]) >= 400: #TODO: Fix this - don't hard code
+        peth_all.append(tmp[j].as_series())
+    peth['all'] = pd.concat(peth_all, axis = 1, join = 'outer')
+    peth['mean'] = peth['all'].mean(axis = 1)
+    return peth
+   #%%
 
 mediancorr = []
 medianp = []
@@ -80,12 +95,12 @@ for s in datasets:
         else: 
             lfpsig = nap.load_eeg(filepath + '/' + name + '.lfp' , channel = j, n_channels = data.nChannels, frequency = 1250, precision ='int16', bytes_size = 2) 
                  
-        
-        lfpsig = downsample(lfpsig, 1, 2)
-        
+        downsample = 2
+        #lfpsig = downsample(lfpsig, 1, 2)
+        lfpsig = lfpsig[::downsample]
         
         # lfp_filt_gamma = nap.Tsd(lfpsig.index.values, butter_bandpass_filter(lfpsig, 30, 50, 1250/2, 3))
-        lfp_filt_gamma = nap.Tsd(lfpsig.index.values, butter_bandpass_filter(lfpsig, 70, 150, 1250/2, 3))
+        lfp_filt_gamma = nap.Tsd(lfpsig.index.values, butter_bandpass_filter(lfpsig, 70, 150, 1250/downsample, 3))
 
         del lfpsig
         
@@ -100,40 +115,21 @@ for s in datasets:
         # power_gamma.to_pickle(rawpath + '/' + s + '_power_gamma.pkl')        
         # power_gamma.to_pickle(rawpath + '/' + s + '_power_highgamma.pkl')        
         
-        a = power_gamma.index[power_gamma.index.get_indexer(peaks.index.values, method='nearest')]
-        
+                
         #%%
-        test = nap.compute_perievent(nap.Tsd(pgs),nap.Tsd(peaks.index.values), minmax = (-1,1), time_unit='s')
         
+        gammaPETH = perievent_Tsd(nap.Tsd(pgs),nap.Ts(peaks.index.values), minmax = (1,1))
         
-        
-        
-        
-        
-        #%%
-        gammaPETH = nap.compute_perievent(nap.Tsd(pgs), nap.Ts(a.values), minmax = (-1, 1), time_unit = 's')
-        
-        tmp = []
-   
-        for i in range(len(gammaPETH)):
-            tmp.append(gammaPETH[i].as_series())
-        
-        tmp = pd.concat(tmp, axis = 1, join = 'inner')
-        
-        tmp = tmp.mean(axis = 1)  
-        
-        # tmp = nap.Tsd(t = tmp.index.values, d = (tmp.values - tmp.values.min()) / (med[j] - tmp.values.min()))
-        tmp = nap.Tsd(t = tmp.index.values, d = tmp.values)
-        
-        
-        gammapows[j] = pd.Series(data = tmp, name = j)    
-        
+        gammapows[j] = pd.Series(data = gammaPETH['mean'], name = j)
+    
     gamma_all = pd.DataFrame(index = gammapows[0].index.values)
     chanmed = []
-    
+   
     for i in channelorder:
         gamma_all = pd.concat([gamma_all, gammapows[i]], axis = 1)
         chanmed.append(med[i])
+         
+      
 
     corr, p = pearsonr(chanmed, depth)
     mediancorr.append(corr)
@@ -155,7 +151,7 @@ for s in datasets:
       
     bounds = [-0.75,0.75]
     fig, ax = plt.subplots()
-    cax = ax.imshow(gamma_all[bounds[0]:bounds[1]].T,extent=[bounds[0] , bounds[1], data.nChannels , 1],aspect = 'auto', cmap = 'gist_heat')
+    cax = ax.imshow(gamma_all[bounds[0]:bounds[1]].T,extent=[bounds[0] , bounds[1], data.nChannels , 1],aspect = 'auto', cmap = 'inferno')
     cbar = fig.colorbar(cax, ticks=[gamma_all[bounds[0]:bounds[1]].values.min(), gamma_all[bounds[0]:bounds[1]].values.max()], label = 'Gamma power')
     plt.xlabel('Lag (s)')
     plt.ylabel('Channel number')

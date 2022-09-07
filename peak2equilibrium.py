@@ -15,6 +15,22 @@ import matplotlib.pyplot as plt
 from scipy.stats import kendalltau, pearsonr, wilcoxon, mannwhitneyu
 import seaborn as sns
 
+#%% 
+
+def perievent_Tsd(data, tref,  minmax):
+    peth = {}
+    
+    a = data.index[data.index.get_indexer(tref.index.values, method='nearest')]
+    
+    tmp = nap.compute_perievent(data, nap.Ts(a.values) , minmax = minmax, time_unit = 's')
+    peth_all = []
+    for j in range(len(tmp)):
+        #if len(tmp[j]) >= 400: #TODO: Fix this - don't hard code
+        peth_all.append(tmp[j].as_series())
+    peth['all'] = pd.concat(peth_all, axis = 1, join = 'outer')
+    peth['mean'] = peth['all'].mean(axis = 1)
+    return peth
+
 #%% On Lab PC
 # data_directory = '/media/DataDhruv/Dropbox (Peyrache Lab)/Peyrache Lab Team Folder/Data/AdrianPoSub/###AllPoSub'
 # datasets = np.loadtxt(os.path.join(data_directory,'dataset_test.list'), delimiter = '\n', dtype = str, comments = '#')
@@ -171,12 +187,4 @@ if os.path.exists(file):
 #          # COMPUTE EVENT CROSS CORRS
 # ###############################################################################################  
 
-cc = nap.compute_eventcorrelogram(spikes, nap.Tsd(up_ep['start'].values), binsize = 0.005, windowsize = 0.25, ep = new_sws_ep)
-tmp = pd.DataFrame(cc)
-tmp = tmp.rolling(window=4, win_type='gaussian',center=True,min_periods=1).mean(std = 2)
-
-dd = tmp[-0.05:0.25]
-n = len(depth)
-tmp = np.argsort(depth.flatten())
-desc = tmp[::-1][:n]
-
+cc = perievent_Tsd(spikes, nap.Ts(up_ep['start'].values) ,minmax = (-0.25, 0.25))

@@ -12,6 +12,7 @@ import pynapple as nap
 import os,sys
 import pandas as pd
 import scipy.io
+import scipy.stats as stats
 import pingouin as pg 
 import matplotlib.pyplot as plt
 
@@ -63,25 +64,29 @@ position = position.restrict(epochs['wake'])
 #Convert spikes to rates
 
 sleep_dt = 0.005 #5ms overlapping bins 
+sleep_binwidth = 0.025 #25ms binwidth
 wake_dt = 0.23
+
 numHDbins = 12
 N_units = len(spikes)
 
 HDbinedges = np.linspace(0,2*np.pi,numHDbins+1)
 centre_bins = 0.5 * (HDbinedges[0:-1] + HDbinedges[1:])
+num_overlapping_bins = int(sleep_binwidth/sleep_dt)
 
 sleep_activity = spikes.count(sleep_dt, new_sws_ep)
-sleep_activity = sleep_activity.as_dataframe().rolling(5, min_periods = 1, center = True, axis = 0).sum() #25 ms bins for sleep
+sleep_activity = sleep_activity.as_dataframe().rolling(num_overlapping_bins, min_periods = 1, center = True, axis = 0).sum() #25 ms bins for sleep
+sleep_rates = sleep_activity/sleep_binwidth
 
 #%%
 #Decode HD from test set
 decoder = linearDecoder(N_units,numHDbins)
 
 decoder = decoder.load('HDbins_' + str(numHDbins) + '_dt_' + str(wake_dt),rwpath + 'param_search/' )
-decoded, p = decoder.decode(sleep_activity.values, withSoftmax=True)
+decoded, p = decoder.decode(sleep_rates.values, withSoftmax=True)
 
         # decoder.save('HDbins_' + str(numHDbins) + '_dt_' + str(bin_dt), rwpath + 'decoder_test/')
-decoder.save(s + '_sleep_HDbins_' + str(numHDbins) + '_dt_' + str(5*sleep_dt), rwpath + 'sleep_decoding/')
+decoder.save(s + '_sleep_HDbins_' + str(numHDbins) + '_dt_' + str(num_overlapping_bins*sleep_dt), rwpath + 'sleep_decoding/')
        
 #Calculate decoding error
 
@@ -95,7 +100,9 @@ for i in range(len(p)):
 wtavg = np.mod(wtavg, 2*np.pi)
 
 poprate = sleep_activity.sum(axis=1)
-poprate = poprate/max(poprate)
+tmp = stats.zscore(poprate.values)
+poprate = nap.Tsd(t = poprate.index.values, d = tmp)
+
 
 #%%
 
@@ -105,26 +112,15 @@ wtavg = nap.Tsd(t = sleep_activity.index.values, d = wtavg)
 poprate = nap.Tsd(t = sleep_activity.index.values, d = poprate)
 
 #%%
-def perievent_Tsd(data, tref,  minmax=(-0.5,0.5)):
-    peth = {}
-    tmp = nap.compute_perievent(data, tref , minmax = (-0.5, 0.5), time_unit = 's')
-    peth_all = []
-    for j in range(len(tmp)):
-        if len(tmp[j]) >= 200: #TODO: Fix this - don't hard code
-            peth_all.append(tmp[j].as_series())
-    peth['all'] = pd.concat(peth_all, axis = 1, join = 'outer')
-    peth['mean'] = peth['all'].mean(axis = 1)
-    return peth
 
-#%%
+DU = nap.TsGroup({0:nap.Ts(up_ep['start'].values)})
+DU_peth = nap.compute_event_trigger_average(DU, MRL, binsize = 0.005, windowsize = (-0.25, 0.25), ep = new_sws_ep)
+DU_rate_peth = nap.compute_event_trigger_average(DU, poprate, binsize = 0.005, windowsize = (-0.25, 0.25), ep = new_sws_ep)
 
-DU = nap.Ts(up_ep['start'].values)
-DU_peth = perievent_Tsd(MRL, DU)
-DU_rate_peth = perievent_Tsd(poprate, DU)
+UD = nap.TsGroup({0:nap.Ts(up_ep['end'].values)})
+UD_peth = nap.compute_event_trigger_average(UD, MRL, binsize = 0.005, windowsize = (-0.25, 0.25), ep = new_sws_ep)
+UD_rate_peth = nap.compute_event_trigger_average(UD, poprate, binsize = 0.005, windowsize = (-0.25, 0.25), ep = new_sws_ep)
 
-UD = nap.Ts(down_ep['start'].values)
-UD_peth = perievent_Tsd(MRL, UD)
-UD_rate_peth = perievent_Tsd(poprate, UD)
 
 #%%
 
@@ -150,36 +146,53 @@ def pethFigure(peth,ratepeth):
     
 #%%
 
-pethFigure(DU_peth,DU_rate_peth)
-pethFigure(UD_peth,UD_rate_peth)
+fig, ax = plt.subplots()
+plt.plot(DU_peth, color = 'b')
+plt.plot(DU_rate_peth, color = 'r')
+ax.set_xlabel('t - relative to DU (s)')
+ax.set_ylabel('Mean MRL')
+ax2 = plt.twinx()
+ax2.set_ylabel('Pop rate')
+plt.axvline(0, color = 'k')
+
+
+fig, ax = plt.subplots()
+plt.plot(UD_peth, color = 'b')
+plt.plot(UD_rate_peth, color = 'r')
+ax.set_xlabel('t - relative to UD (s)')
+ax.set_ylabel('Mean MRL')
+ax2 = plt.twinx()
+ax2.set_ylabel('Pop rate')
+plt.axvline(0, color = 'k')
+
 #%%
-# peri_du = {}
-# tmp = []
-# for i in range(len(new_sws_ep)): #switch with enumerate
-#     mrlvec = MRL.restrict(new_sws_ep.loc[[i]])
-#     du = nap.Ts(up_ep['start'].values).restrict(new_sws_ep.loc[[i]])
+peri_du = {}
+tmp = []
+for i in range(len(new_sws_ep)): #switch with enumerate
+    mrlvec = MRL.restrict(new_sws_ep.loc[[i]])
+    du = nap.Ts(up_ep['start'].values).restrict(new_sws_ep.loc[[i]])
        
-#     MRL_PETH = nap.compute_perievent(mrlvec, du , minmax = (-0.3, 0.3), time_unit = 's')
+    MRL_PETH = nap.compute_perievent(mrlvec, du , minmax = (-0.3, 0.3), time_unit = 's')
     
 
-#     for j in range(len(MRL_PETH)):
-#         if len(MRL_PETH[j]) >= 120:
-#             tmp.append(MRL_PETH[j].as_series())
+    for j in range(len(MRL_PETH)):
+        if len(MRL_PETH[j]) >= 120:
+            tmp.append(MRL_PETH[j].as_series())
         
 
       
-#     peri_du[i] = pd.Series(data = tmp, name = i)    
+    peri_du[i] = pd.Series(data = tmp, name = i)    
 
-# tmp = pd.concat(tmp, axis = 1, join = 'inner')
-# tmp = tmp.mean(axis = 1)
-# du_peth_all = pd.DataFrame(index = tmp)
+tmp = pd.concat(tmp, axis = 1, join = 'inner')
+tmp = tmp.mean(axis = 1)
+du_peth_all = pd.DataFrame(index = tmp)
 
-# for i in range(len(new_sws_ep)):
-#     du_peth_all = pd.concat([du_peth_all, peri_du[i]], axis = 1)
+for i in range(len(new_sws_ep)):
+    du_peth_all = pd.concat([du_peth_all, peri_du[i]], axis = 1)
 
-# plt.figure()
-# plt.imshow(du_peth_all.T, aspect='auto', extent = [du_peth_all.index[0],du_peth_all.index[-1],du_peth_all.columns[0],du_peth_all.columns[-1]], origin='lower')
-# plt.colorbar()
+plt.figure()
+plt.imshow(du_peth_all.T, aspect='auto', extent = [du_peth_all.index[0],du_peth_all.index[-1],du_peth_all.columns[0],du_peth_all.columns[-1]], origin='lower')
+plt.colorbar()
 
 #%%
 peri_ud = {}

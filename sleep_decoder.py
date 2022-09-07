@@ -12,6 +12,7 @@ import pynapple as nap
 import os,sys
 import pandas as pd
 import scipy.io
+import scipy.stats as stats
 import pingouin as pg 
 import matplotlib.pyplot as plt
 
@@ -65,15 +66,24 @@ position = position.restrict(epochs['wake'])
 #Convert spikes to rates
 
 sleep_dt = 0.005 #5ms overlapping bins 
+sleep_binwidth = 0.025 #25ms binwidth
 wake_dt = 0.23
+
 numHDbins = 12
 N_units = len(spikes)
 
 HDbinedges = np.linspace(0,2*np.pi,numHDbins+1)
 centre_bins = 0.5 * (HDbinedges[0:-1] + HDbinedges[1:])
 
+num_overlapping_bins = int(sleep_binwidth/sleep_dt)
+
 sleep_activity = spikes.count(sleep_dt, new_sws_ep)
-sleep_activity = sleep_activity.as_dataframe().rolling(5, min_periods = 1, center = True, axis = 0).sum() #25 ms bins for sleep
+sleep_activity = sleep_activity.as_dataframe().rolling(num_overlapping_bins, min_periods = 1, center = True, axis = 0).sum() #25 ms bins for sleep
+sleep_rates = sleep_activity/sleep_binwidth
+
+wake_activity = spikes.count(wake_dt, position.time_support)
+#sleep_activity = sleep_activity.as_dataframe().rolling(num_overlapping_bins, min_periods = 1, center = True, axis = 0).sum() #25 ms bins for sleep
+wake_rates = wake_activity/wake_dt
     
 #%%
         
@@ -99,10 +109,10 @@ sleep_activity = sleep_activity.as_dataframe().rolling(5, min_periods = 1, cente
 decoder = linearDecoder(N_units,numHDbins)
 
 decoder = decoder.load('HDbins_' + str(numHDbins) + '_dt_' + str(wake_dt),rwpath + 'param_search/' )
-decoded, p = decoder.decode(sleep_activity.values, withSoftmax=True)
+decoded, p = decoder.decode(sleep_rates.values, withSoftmax=True)
 
         # decoder.save('HDbins_' + str(numHDbins) + '_dt_' + str(bin_dt), rwpath + 'decoder_test/')
-decoder.save(s + '_sleep_HDbins_' + str(numHDbins) + '_dt_' + str(5*sleep_dt), rwpath + 'sleep_decoding/')
+decoder.save(s + '_sleep_HDbins_' + str(numHDbins) + '_dt_' + str(num_overlapping_bins*sleep_dt), rwpath + 'sleep_decoding/')
        
 #Calculate decoding error
 
@@ -115,29 +125,32 @@ for i in range(len(p)):
 
 wtavg = np.mod(wtavg, 2*np.pi)
 
-poprate = sleep_activity.sum(axis=1)
-poprate = poprate/max(poprate)
+poprate = sleep_rates.sum(axis=1)
+poprate = poprate/poprate.median()
+tmp = np.log10(poprate.values)
+poprate = nap.Tsd(t = poprate.index.values, d = tmp)
+
         
 #%%
 
 start = new_sws_ep['start'].values[0]
 ends = new_sws_ep['end'].values[0]
 
-q = pd.DataFrame(index = sleep_activity.index.values, data = p)
-MRL = nap.Tsd(t = sleep_activity.index.values, d = MRL)
-wtavg = nap.Tsd(t = sleep_activity.index.values, d = wtavg)
-poprate = nap.Tsd(t = sleep_activity.index.values, d = poprate)
+p_x = pd.DataFrame(index = sleep_rates.index.values, data = p)
+MRL = nap.Tsd(t = sleep_rates.index.values, d = MRL)
+wtavg = nap.Tsd(t = sleep_rates.index.values, d = wtavg)
+poprate = nap.Tsd(t = sleep_rates.index.values, d = poprate)
 
-MRL_thresholded = MRL.threshold(0.25)
-wtavg_toShow = nap.Tsd(t = sleep_activity.index.values, d = wtavg[MRL_thresholded.index.values])
+MRL_thresholded = MRL.threshold(0.5)
+wtavg_toShow = nap.Tsd(t = sleep_rates.index.values, d = wtavg[MRL_thresholded.index.values])
 
-q = q[start:ends]
+p_x = p_x[start:ends]
 
 upons = up_ep['start'].values[(up_ep['start'].values >= start) & (up_ep['start'].values <= ends)]
 upoffs = up_ep['end'].values[(up_ep['end'].values >= start) & (up_ep['end'].values <= ends)]
 
 plt.figure()
-plt.imshow(q.T, aspect='auto',interpolation='none', extent = [start,ends,HDbinedges[0],HDbinedges[-1]], origin='lower')
+plt.imshow(p_x.T, aspect='auto',interpolation='none', extent = [start,ends,HDbinedges[0],HDbinedges[-1]], origin='lower')
 plt.plot(wtavg_toShow[start:ends],'r')
 plt.plot(MRL[start:ends],'w')
 plt.plot(poprate[start:ends], 'g')
@@ -153,7 +166,7 @@ plt.colorbar()
 #%%
 
 (ratecounts,mrlbins,ratebins) = np.histogram2d(MRL,poprate,bins=[30,30],
-                                                 range=[[0,1],[0,0.8]])
+                                                 range=[[0,1],[-1,0.5]])
 
 #conditional Distribution 
 
@@ -164,17 +177,17 @@ plt.figure()
 plt.imshow(P_MRL_rate, origin='lower', extent = [ratebins[0],ratebins[-1],mrlbins[0],mrlbins[-1]],
                                                aspect='auto',vmax=0.2)
 plt.ylabel('MRL')
-plt.xlabel('Population rate')
+plt.xlabel('log( norm Population rate)')
 
 
 #Joint Distribution
 
 plt.figure()
-plt.imshow(ratecounts, origin='lower', extent = [mrlbins[0],mrlbins[-1],
-                                                  ratebins[0],ratebins[-1]],
+plt.imshow(ratecounts, origin='lower', extent = [ratebins[0],ratebins[-1],
+                                                  mrlbins[0],mrlbins[-1]],
             aspect='auto')
-plt.xlabel('MRL')
-plt.ylabel('Population rate')
+plt.ylabel('MRL')
+plt.xlabel('log (norm Population rate)')
 
 
 #%%

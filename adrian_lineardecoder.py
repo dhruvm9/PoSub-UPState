@@ -56,7 +56,8 @@ for i in range(len(dt)):
     
     #Restrict Rates to only times we have HD info
     rates = rates.restrict(position.time_support) 
-
+    rates = rates/bin_dt 
+    plt.plot(rates[0])
 #%%
 #Bin HD and put it into a Tsd
         
@@ -223,3 +224,22 @@ plt.xlabel('MRL')
 plt.ylabel('Error (rad)')
 
 
+#%%
+
+bin_dt = [0.1, 0.2, 0.4]
+
+for j in bin_dt:
+
+    per = nap.IntervalSet(start = 0 ,end = 2)
+    bins = np.arange(per.start[0], per.end[0] + j, j)
+    rates = spikes.count(j)
+    
+    rate0 = rates.restrict(per) / j
+    
+    plt.figure()    
+    plt.plot(spikes[0].restrict(per).as_units('s').fillna(0),'|', color = 'k')
+    plt.plot(rates[0].restrict(per),color = 'r')
+    plt.plot(rate0[0], color = 'g')
+    
+    for i in range(len(bins)):
+        plt.axvline(bins[i])

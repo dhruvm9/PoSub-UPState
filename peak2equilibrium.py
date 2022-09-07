@@ -171,4 +171,12 @@ if os.path.exists(file):
 #          # COMPUTE EVENT CROSS CORRS
 # ###############################################################################################  
 
-cc = nap.compute_perievent(spikes.restrict(up_ep), nap.Ts(up_ep['start'].values) ,minmax = (-0.25, 0.25), time_unit = 's')
+cc = nap.compute_eventcorrelogram(spikes, nap.Tsd(up_ep['start'].values), binsize = 0.005, windowsize = 0.25, ep = new_sws_ep)
+tmp = pd.DataFrame(cc)
+tmp = tmp.rolling(window=4, win_type='gaussian',center=True,min_periods=1).mean(std = 2)
+
+dd = tmp[-0.05:0.25]
+n = len(depth)
+tmp = np.argsort(depth.flatten())
+desc = tmp[::-1][:n]
+

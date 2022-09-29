@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Wed Aug 17 17:11:01 2022
+Created on Wed Sep 28 10:30:42 2022
 
 @author: dhruv
 """
@@ -66,45 +66,32 @@ position = position.restrict(epochs['wake'])
 #Convert spikes to rates
 
 sleep_dt = 0.005 #5ms overlapping bins 
-sleep_binwidth = 0.025 #25ms binwidth
+sleep_binwidth = 0.095 #25ms binwidth
 wake_dt = 0.23
-
 numHDbins = 12
 N_units = len(spikes)
 
 HDbinedges = np.linspace(0,2*np.pi,numHDbins+1)
 centre_bins = 0.5 * (HDbinedges[0:-1] + HDbinedges[1:])
 
-num_overlapping_bins = int(sleep_binwidth/sleep_dt)
+mean_ud_mrl = []
+mean_du_mrl = []
+
+num_overlapping_bins_list = []
+
+
+    
+num_overlapping_bins = int(sleep_binwidth/sleep_dt)    
+num_overlapping_bins_list.append(num_overlapping_bins)
 
 sleep_activity = spikes.count(sleep_dt, new_sws_ep)
 sleep_activity = sleep_activity.as_dataframe().rolling(num_overlapping_bins, min_periods = 1, center = True, axis = 0).sum() #25 ms bins for sleep
+
 sleep_rates = sleep_activity/sleep_binwidth
 
-wake_activity = spikes.count(wake_dt, position.time_support)
-#sleep_activity = sleep_activity.as_dataframe().rolling(num_overlapping_bins, min_periods = 1, center = True, axis = 0).sum() #25 ms bins for sleep
-wake_rates = wake_activity/wake_dt
-    
-#%%
-        
-#Plot data
-# plt.figure()
-
-# plt.subplot(2,1,1)
-# #Pynapple Question: do we want this to pull timestamps, like plot?
-# plt.imshow(rates.T, aspect='auto')  
-# plt.ylabel('Cell')
-
-# plt.subplot(2,1,2)
-# plt.plot(train_HD)
-# plt.plot(test_HD)
-
-# plt.xlabel('t (s)')
-# plt.ylabel('HD (bin)')
-
-# plt.show()
 
 #%%
+
 #Decode HD from test set
 decoder = linearDecoder(N_units,numHDbins)
 
@@ -112,7 +99,7 @@ decoder = decoder.load('HDbins_' + str(numHDbins) + '_dt_' + str(wake_dt),rwpath
 decoded, p = decoder.decode(sleep_rates.values, withSoftmax=True)
 
         # decoder.save('HDbins_' + str(numHDbins) + '_dt_' + str(bin_dt), rwpath + 'decoder_test/')
-# decoder.save(s + '_sleep_HDbins_' + str(numHDbins) + '_dt_' + str(num_overlapping_bins*sleep_dt), rwpath + 'sleep_decoding/')
+decoder.save(s + '_sleep_HDbins_' + str(numHDbins) + '_dt_' + str(num_overlapping_bins*sleep_dt), rwpath + 'sleep_decoding/')
        
 #Calculate decoding error
 
@@ -127,71 +114,101 @@ wtavg = np.mod(wtavg, 2*np.pi)
 
 poprate = sleep_rates.sum(axis=1)
 poprate = poprate/poprate.median()
-tmp = np.log10(poprate.values)
+tmp = stats.zscore(poprate.values)
 poprate = nap.Tsd(t = poprate.index.values, d = tmp)
-
         
 #%%
-
-start = new_sws_ep['start'].values[0]
-ends = new_sws_ep['end'].values[0]
 
 p_x = pd.DataFrame(index = sleep_rates.index.values, data = p)
 MRL = nap.Tsd(t = sleep_rates.index.values, d = MRL)
 wtavg = nap.Tsd(t = sleep_rates.index.values, d = wtavg)
 poprate = nap.Tsd(t = sleep_rates.index.values, d = poprate)
 
-MRL_thresholded = MRL.threshold(0.5)
-wtavg_toShow = nap.Tsd(t = sleep_rates.index.values, d = wtavg[MRL_thresholded.index.values])
+#%% 
 
-p_x = p_x[start:ends]
+winlength = sleep_dt * num_overlapping_bins
 
-upons = up_ep['start'].values[(up_ep['start'].values >= start) & (up_ep['start'].values <= ends)]
-upoffs = up_ep['end'].values[(up_ep['end'].values >= start) & (up_ep['end'].values <= ends)]
-
-plt.figure()
-plt.imshow(p_x.T, aspect='auto',interpolation='none', extent = [start,ends,HDbinedges[0],HDbinedges[-1]], origin='lower')
-plt.plot(wtavg_toShow[start:ends],'r')
-plt.plot(MRL[start:ends],'w')
-# plt.plot(poprate[start:ends], 'g')
-
-for pos in range(len(upons)):
-    plt.axvline(upons[pos], color='m')
-    plt.axvline(upoffs[pos], color='c')
     
+ud = down_ep['start'].values - (winlength/2)
+# ud = down_ep['start'].values - (i/2)
+ud = nap.Tsd(ud)
+
+du = down_ep['end'].values + (winlength/2)
+# du = down_ep['end'].values + (i/2)
+du = nap.Tsd(du)
+
+angle_du = du.value_from(wtavg)
+mrl_du = du.value_from(MRL)
+
+angle_ud = ud.value_from(wtavg)
+mrl_ud = ud.value_from(MRL)
+
+angdiff = abs(angle_du.values - angle_ud.values)
+angdiff = np.minimum((2*np.pi - abs(angdiff)), abs(angdiff))
+
+mean_ud_mrl.append(np.mean(mrl_ud))
+mean_du_mrl.append(np.mean(mrl_du))
+
+du_interval = nap.IntervalSet(start = down_ep['end'].values, end = down_ep['end'].values + 0.03)
+ud_interval = nap.IntervalSet(start = down_ep['start'].values - 0.03, end = down_ep['start'].values)
+
+rel_angles = np.arange(0,0.15,sleep_dt)
+
+#%%
+anglebins = np.linspace(0,np.pi,25)
+meanrelangle = np.zeros_like(rel_angles)
+anglehist_DU = np.zeros((len(anglebins)-1,len(rel_angles)))
+anglehist_UD = np.zeros((len(anglebins)-1,len(rel_angles)))
+
+for dd,delay in enumerate(rel_angles):
+    dt = nap.Ts(du.index.values+delay)
+    delay_angle = dt.value_from(wtavg)
+    relangle = delay_angle.values-angle_du.values
+    relangle = np.minimum((2*np.pi - abs(relangle)), (abs(relangle)))
+    #meanrelangle[dd] = np.mean(relangle)
+    anglehist_DU[:,dd],_ = np.histogram(relangle,anglebins)
+    anglehist_DU[:,dd] = anglehist_DU[:,dd]/np.sum(anglehist_DU[:,dd])
+
+    dt = nap.Ts(ud.index.values-delay)
+    delay_angle = dt.value_from(wtavg)
+    relangle = delay_angle.values-angle_du.values
+    relangle = np.minimum((2*np.pi - abs(relangle)), (abs(relangle)))
+    #meanrelangle[dd] = np.mean(relangle)
+    anglehist_UD[:,dd],_ = np.histogram(relangle,anglebins)
+    anglehist_UD[:,dd] = anglehist_UD[:,dd]/np.sum(anglehist_UD[:,dd])
+    
+#%%
+plt.figure()
+plt.suptitle('Bin Width = ' + str(sleep_binwidth) + ' s')
+plt.subplot(2,2,2)
+plt.imshow(anglehist_DU, aspect='auto',extent=[rel_angles[0],rel_angles[-1],
+                                            anglebins[0],anglebins[-1]],
+                                       origin='lower',
+                                       vmin = 0, vmax = 0.2)
+plt.xlabel('t (from DU)')
+plt.ylabel('Angle - Angle DU')
 plt.colorbar()
 
-tmp = np.minimum((2*np.pi - abs(wtavg.values)), abs(wtavg.values))
-
-plt.figure()
-plt.hist(tmp)
-plt.xlabel('Error (rad)')
-
-#%%
-
-(ratecounts,mrlbins,ratebins) = np.histogram2d(MRL,poprate,bins=[30,30],
-                                                 range=[[0,1],[-1,0.5]])
-
-#conditional Distribution 
-
-# P_rate_MRL = ratecounts/np.sum(ratecounts,axis=0)
-
-P_MRL_rate = ratecounts/np.sum(ratecounts,axis=0)
-plt.figure()
-plt.imshow(P_MRL_rate, origin='lower', extent = [ratebins[0],ratebins[-1],mrlbins[0],mrlbins[-1]],
-                                               aspect='auto',vmax=0.2)
-plt.ylabel('MRL')
-plt.xlabel('log( norm Population rate)')
-
-
-#Joint Distribution
-
-plt.figure()
-plt.imshow(ratecounts, origin='lower', extent = [ratebins[0],ratebins[-1],
-                                                  mrlbins[0],mrlbins[-1]],
-            aspect='auto')
-plt.ylabel('MRL')
-plt.xlabel('log (norm Population rate)')
+plt.subplot(2,2,1)
+plt.imshow(anglehist_UD, aspect='auto',extent=[-rel_angles[-1],rel_angles[0],
+                                            anglebins[0],anglebins[-1]],
+                                       origin='lower',
+                                       vmin = 0, vmax = 0.2)
+plt.xlabel('t (from UD)')
+plt.ylabel('Angle - Angle DU')
+plt.colorbar()
 
 
 #%%
+
+
+
+
+
+    
+   
+    
+    
+
+
+

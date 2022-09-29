@@ -113,7 +113,7 @@ for j in sleep_binwidth:
     
     poprate = sleep_rates.sum(axis=1)
     poprate = poprate/poprate.median()
-    tmp = np.log10(poprate.values)
+    tmp = stats.zscore(poprate.values)
     poprate = nap.Tsd(t = poprate.index.values, d = tmp)
             
 #%%
@@ -148,6 +148,46 @@ for j in sleep_binwidth:
     mean_ud_mrl.append(np.mean(mrl_ud))
     mean_du_mrl.append(np.mean(mrl_du))
     
+    plt.figure()
+    plt.title('MRL Distributions')
+    plt.hist(mrl_du, label = 'DU')
+    plt.hist(mrl_ud, alpha = 0.8, label = 'UD')
+    plt.xlabel('MRL')
+    plt.ylabel('Counts')
+    plt.legend(loc = 'upper right')
+    
+#%%
+
+    threshold = 0.5
+    tokeep = []
+
+    for i in range(len(mrl_ud)):
+        if (mrl_ud.iloc[i] > threshold) & (mrl_du.iloc[i] > threshold):
+            tokeep.append(i)        
+
+    ang_keep = angdiff[tokeep]
+
+    # f, ax = plt.subplots()
+    # ax.set_xscale('log')
+    # ax.set_yscale('log')
+    # im = ax.scatter(mrl_ud.values[tokeep],mrl_du.values[tokeep], c = ang_keep, cmap = 'hot',s = 1)
+    # f.colorbar(im, ax=ax)
+    # ax.set_xlabel('UD MRL')
+    # ax.set_ylabel('DU MRL')
+    
+    # ax.set_xlim(1e-1,1)
+    # ax.set_ylim(1e-1,1)   
+
+    plt.figure()
+    plt.title('Window length = ' + str(j) + ' s')
+    plt.hist(ang_keep)
+    plt.xlabel('UDU Angular difference (rad)')
+    plt.ylabel('Counts')
+
+
+    
+#%% 
+    
 plt.figure()
 plt.plot(sleep_binwidth,mean_ud_mrl,'o-', label = 'UD')
 plt.plot(sleep_binwidth,mean_du_mrl, 'o-', label = 'DU')
@@ -173,36 +213,17 @@ plt.legend(loc = 'lower right')
     
     
 
-threshold = 0.5
-tokeep = []
 
-for i in range(len(mrl_ud)):
-    if (mrl_ud.iloc[i] > threshold) & (mrl_du.iloc[i] > threshold):
-        tokeep.append(i)        
-
-ang_keep = angdiff[tokeep]
-
-f, ax = plt.subplots()
-ax.set_xscale('log')
-ax.set_yscale('log')
-im = ax.scatter(mrl_ud.values[tokeep],mrl_du.values[tokeep], c = ang_keep, cmap = 'hot',s = 1)
-f.colorbar(im, ax=ax)
-ax.set_xlabel('UD MRL')
-ax.set_ylabel('DU MRL')
-# ax.set_xlim(1e-1,1)
-# ax.set_ylim(1e-1,1)   
-
-plt.figure()
-plt.hist(ang_keep)
 
 #%% 
 
-a = stats.binned_statistic_2d(mrl_ud.values[tokeep], mrl_du.values[tokeep], ang_keep, statistic = 'mean', bins = 20)
+# a = stats.binned_statistic_2d(mrl_ud.values[tokeep], mrl_du.values[tokeep], ang_keep, statistic = 'mean', bins = 20)
 
-plt.figure()
-plt.imshow(a[0].T,origin='lower', extent = [a[1][0],a[1][-1],a[2][0],a[2][-1]],
-                                               aspect='auto')
-plt.xlabel('UD MRL')
-plt.ylabel('DU MRL')
-plt.colorbar()
+# plt.figure()
+# plt.imshow(a[0].T,origin='lower', extent = [a[1][0],a[1][-1],a[2][0],a[2][-1]],
+#                                                aspect='auto')
+# plt.xlabel('UD MRL')
+# plt.ylabel('DU MRL')
+# plt.colorbar()
     
+#%%

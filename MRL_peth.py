@@ -86,7 +86,7 @@ decoder = decoder.load('HDbins_' + str(numHDbins) + '_dt_' + str(wake_dt),rwpath
 decoded, p = decoder.decode(sleep_rates.values, withSoftmax=True)
 
         # decoder.save('HDbins_' + str(numHDbins) + '_dt_' + str(bin_dt), rwpath + 'decoder_test/')
-decoder.save(s + '_sleep_HDbins_' + str(numHDbins) + '_dt_' + str(num_overlapping_bins*sleep_dt), rwpath + 'sleep_decoding/')
+# decoder.save(s + '_sleep_HDbins_' + str(numHDbins) + '_dt_' + str(num_overlapping_bins*sleep_dt), rwpath + 'sleep_decoding/')
        
 #Calculate decoding error
 
@@ -100,7 +100,7 @@ for i in range(len(p)):
 wtavg = np.mod(wtavg, 2*np.pi)
 
 poprate = sleep_activity.sum(axis=1)
-tmp = stats.zscore(poprate.values)
+tmp =  stats.zscore(poprate.values)
 poprate = nap.Tsd(t = poprate.index.values, d = tmp)
 
 
@@ -124,101 +124,128 @@ UD_rate_peth = nap.compute_event_trigger_average(UD, poprate, binsize = 0.005, w
 
 #%%
 
-def pethFigure(peth,ratepeth):
-    plt.figure(figsize=(10,8))
-    plt.subplot(2,2,1)
-    plt.imshow(peth['all'].T, aspect='auto', origin='lower', resample=False,
-               extent = [peth['all'].index[0],peth['all'].index[-1],
-                         peth['all'].columns[0],peth['all'].columns[-1]])
-    plt.colorbar()
-    plt.ylabel('DU index')
+# def pethFigure(peth,ratepeth):
+#     plt.figure(figsize=(10,8))
+#     plt.subplot(2,2,1)
+#     plt.imshow(peth['all'].T, aspect='auto', origin='lower', resample=False,
+#                extent = [peth['all'].index[0],peth['all'].index[-1],
+#                          peth['all'].columns[0],peth['all'].columns[-1]])
+#     plt.colorbar()
+#     plt.ylabel('DU index')
     
     
-    ax = plt.subplot(4,2,5)
-    ax.plot(peth['mean'],color='b')
-    ax.set_ylabel('mean mrl')
-    ax2 = ax.twinx()
-    ax2.plot(ratepeth['mean'],color='r')
-    plt.xlabel('t - relative to DU (s)')
-    ax2.set_ylabel('Pop Rate')
-    plt.show()
+#     ax = plt.subplot(4,2,5)
+#     ax.plot(peth['mean'],color='b')
+#     ax.set_ylabel('mean mrl')
+#     ax2 = ax.twinx()
+#     ax2.plot(ratepeth['mean'],color='r')
+#     plt.xlabel('t - relative to DU (s)')
+#     ax2.set_ylabel('Pop Rate')
+#     plt.show()
     
     
 #%%
 
-fig, ax = plt.subplots()
-plt.plot(DU_peth, color = 'b')
-plt.plot(DU_rate_peth, color = 'r')
-ax.set_xlabel('t - relative to DU (s)')
-ax.set_ylabel('Mean MRL')
-ax2 = plt.twinx()
-ax2.set_ylabel('Pop rate')
+# fig, ax = plt.subplots()
+plt.figure()
+plt.suptitle('Aligned to DU')
+plt.subplot(2,1,1)
+plt.ylabel('Mean MRL')
+plt.plot(DU_peth, color = 'b', label = 'MRL')
+plt.axvline(0, color = 'k')
+plt.legend(loc = 'upper right')
+
+plt.subplot(2,1,2)
+plt.plot(DU_rate_peth, color = 'r', label = 'z-scored pop rate')
+plt.legend(loc = 'upper right')
+plt.xlabel('t - relative to DU (s)')
+plt.ylabel('Pop rate (z-scored)')
 plt.axvline(0, color = 'k')
 
+# ax.set_xlabel('t - relative to DU (s)')
+# ax.set_ylabel('Mean MRL')
+# ax2 = plt.twinx()
+# ax2.set_ylabel('Pop rate')
 
-fig, ax = plt.subplots()
-plt.plot(UD_peth, color = 'b')
-plt.plot(UD_rate_peth, color = 'r')
-ax.set_xlabel('t - relative to UD (s)')
-ax.set_ylabel('Mean MRL')
-ax2 = plt.twinx()
-ax2.set_ylabel('Pop rate')
+plt.figure()
+plt.suptitle('Aligned to UD')
+plt.subplot(2,1,1)
+plt.ylabel('Mean MRL')
+plt.plot(UD_peth, color = 'b', label = 'MRL')
 plt.axvline(0, color = 'k')
+plt.legend(loc = 'upper right')
+
+plt.subplot(2,1,2)
+plt.plot(UD_rate_peth, color = 'r', label = 'z-scored pop rate')
+plt.legend(loc = 'upper right')
+plt.xlabel('t - relative to UD (s)')
+plt.ylabel('Pop rate (z-scored)')
+plt.axvline(0, color = 'k')
+
+# ax.set_xlabel('t - relative to DU (s)')
+# ax.set_ylabel('Mean MRL')
+# ax2 = plt.twinx()
+# ax2.set_ylabel('Pop rate')
+
+
+
+
+
 
 #%%
-peri_du = {}
-tmp = []
-for i in range(len(new_sws_ep)): #switch with enumerate
-    mrlvec = MRL.restrict(new_sws_ep.loc[[i]])
-    du = nap.Ts(up_ep['start'].values).restrict(new_sws_ep.loc[[i]])
+# peri_du = {}
+# tmp = []
+# for i in range(len(new_sws_ep)): #switch with enumerate
+#     mrlvec = MRL.restrict(new_sws_ep.loc[[i]])
+#     du = nap.Ts(up_ep['start'].values).restrict(new_sws_ep.loc[[i]])
        
-    MRL_PETH = nap.compute_perievent(mrlvec, du , minmax = (-0.3, 0.3), time_unit = 's')
+#     MRL_PETH = nap.compute_perievent(mrlvec, du , minmax = (-0.3, 0.3), time_unit = 's')
     
 
-    for j in range(len(MRL_PETH)):
-        if len(MRL_PETH[j]) >= 120:
-            tmp.append(MRL_PETH[j].as_series())
+#     for j in range(len(MRL_PETH)):
+#         if len(MRL_PETH[j]) >= 120:
+#             tmp.append(MRL_PETH[j].as_series())
         
 
       
-    peri_du[i] = pd.Series(data = tmp, name = i)    
+#     peri_du[i] = pd.Series(data = tmp, name = i)    
 
-tmp = pd.concat(tmp, axis = 1, join = 'inner')
-tmp = tmp.mean(axis = 1)
-du_peth_all = pd.DataFrame(index = tmp)
+# tmp = pd.concat(tmp, axis = 1, join = 'inner')
+# tmp = tmp.mean(axis = 1)
+# du_peth_all = pd.DataFrame(index = tmp)
 
-for i in range(len(new_sws_ep)):
-    du_peth_all = pd.concat([du_peth_all, peri_du[i]], axis = 1)
+# for i in range(len(new_sws_ep)):
+#     du_peth_all = pd.concat([du_peth_all, peri_du[i]], axis = 1)
 
-plt.figure()
-plt.imshow(du_peth_all.T, aspect='auto', extent = [du_peth_all.index[0],du_peth_all.index[-1],du_peth_all.columns[0],du_peth_all.columns[-1]], origin='lower')
-plt.colorbar()
+# plt.figure()
+# plt.imshow(du_peth_all.T, aspect='auto', extent = [du_peth_all.index[0],du_peth_all.index[-1],du_peth_all.columns[0],du_peth_all.columns[-1]], origin='lower')
+# plt.colorbar()
 
 #%%
-peri_ud = {}
+# peri_ud = {}
 
-for i in range(len(new_sws_ep)):
-    mrlvec = MRL.restrict(new_sws_ep.loc[[i]])
-    ud = nap.Ts(down_ep['start'].values).restrict(new_sws_ep.loc[[i]])
+# for i in range(len(new_sws_ep)):
+#     mrlvec = MRL.restrict(new_sws_ep.loc[[i]])
+#     ud = nap.Ts(down_ep['start'].values).restrict(new_sws_ep.loc[[i]])
        
-    MRL_PETH = nap.compute_perievent(mrlvec, ud , minmax = (-0.3, 0.3), time_unit = 's')
-    tmp = []
+#     MRL_PETH = nap.compute_perievent(mrlvec, ud , minmax = (-0.3, 0.3), time_unit = 's')
+#     tmp = []
 
-    for j in range(len(MRL_PETH)):
-        if len(MRL_PETH[j]) >= 120:
-            tmp.append(MRL_PETH[j].as_series())
+#     for j in range(len(MRL_PETH)):
+#         if len(MRL_PETH[j]) >= 120:
+#             tmp.append(MRL_PETH[j].as_series())
         
-    tmp = pd.concat(tmp, axis = 1, join = 'inner')
-    tmp = tmp.mean(axis = 1)  
-    peri_ud[i] = pd.Series(data = tmp, name = i)    
+#     tmp = pd.concat(tmp, axis = 1, join = 'inner')
+#     tmp = tmp.mean(axis = 1)  
+#     peri_ud[i] = pd.Series(data = tmp, name = i)    
 
-ud_peth_all = pd.DataFrame(index = peri_du[0].index.values)
+# ud_peth_all = pd.DataFrame(index = peri_du[0].index.values)
 
-for i in range(len(new_sws_ep)):
-    ud_peth_all = pd.concat([ud_peth_all, peri_ud[i]], axis = 1)
+# for i in range(len(new_sws_ep)):
+#     ud_peth_all = pd.concat([ud_peth_all, peri_ud[i]], axis = 1)
 
-plt.figure()
-plt.imshow(ud_peth_all.T, aspect='auto', extent = [ud_peth_all.index[0],ud_peth_all.index[-1],ud_peth_all.columns[0],du_peth_all.columns[-1]], origin='lower')
-plt.colorbar()
+# plt.figure()
+# plt.imshow(ud_peth_all.T, aspect='auto', extent = [ud_peth_all.index[0],ud_peth_all.index[-1],ud_peth_all.columns[0],du_peth_all.columns[-1]], origin='lower')
+# plt.colorbar()
 
 

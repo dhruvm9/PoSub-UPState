@@ -18,7 +18,6 @@ import pandas as pd
 import scipy.io
 from functions import *
 from wrappers import *
-import ipyparallel
 import os, sys
 import neuroseries as nts 
 import time 
@@ -125,13 +124,15 @@ for s in datasets:
     rates = []
     
     for i in neurons:
-        spk2 = spikes[i].restrict(ep_D).as_units('ms').index.values
+        # spk2 = spikes[i].restrict(ep_D).as_units('ms').index.values
+        spk2 = spikes[i].restrict(new_sws_ep).as_units('ms').index.values
         tmp = crossCorr(tsd_dn, spk2, binsize, nbins)
         tmp = pd.DataFrame(tmp)
         tmp = tmp.rolling(window=4, win_type='gaussian',center=True,min_periods=1).mean(std = 2)
         
         
-        fr = len(spk2)/ep_D.tot_length('s')
+        # fr = len(spk2)/ep_D.tot_length('s')
+        fr = len(spk2)/new_sws_ep.tot_length('s')
         rates.append(fr)
         cc[i] = tmp.values
         cc[i] = tmp.values/fr

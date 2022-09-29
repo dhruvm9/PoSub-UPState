@@ -17,6 +17,7 @@ from scipy.stats import kendalltau, pearsonr, wilcoxon
 from functions import *
 from wrappers import *
 from matplotlib.colors import hsv_to_rgb
+import random
 
 data_directory = '/media/DataDhruv/Dropbox (Peyrache Lab)/Peyrache Lab Team Folder/Data/AdrianPoSub/###AllPoSub'
 datasets = np.loadtxt(os.path.join(data_directory,'dataset_test.list'), delimiter = '\n', dtype = str, comments = '#')
@@ -162,19 +163,18 @@ for s in datasets:
     for i in hd_data['cell'].values:
         print(i)
         a = spikes[i].restrict(per)
-        plt.plot(a.fillna(i), '|', color = hd_data.loc[hd_data['cell'] == i, 'color'].values[0], markersize = 10)
+        plt.plot(a.fillna(hd_data.loc[hd_data['cell'] == i, 'depth'].values[0]), '|', color = hd_data.loc[hd_data['cell'] == i, 'color'].values[0], markersize = 10)
         
-   
-    
-    
-    for i in range(3):
+      
+    for i in random.sample(range(0,len(up_ep)), 10) :
         ep = nap.IntervalSet(start = up_ep['start'][i] - 0.5, end = up_ep['start'][i] + 1)
         plt.figure()
+        plt.title('Epoch #' + str(i))
         
         for j in hd_data['cell'].values:
             # print(i)
             a = spikes[j].restrict(ep)
-            plt.plot(a.fillna(j), '|', color = hd_data.loc[hd_data['cell'] == j, 'color'].values[0], markersize = 10)
+            plt.plot(a.fillna(hd_data.loc[hd_data['cell'] == j, 'depth'].values[0]), '|', color = hd_data.loc[hd_data['cell'] == j, 'color'].values[0], markersize = 10)
         plt.axvline(up_ep['start'][i], color = 'k')
         ax.spines['right'].set_visible(False)
         ax.spines['left'].set_visible(False)

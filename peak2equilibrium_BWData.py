@@ -64,23 +64,32 @@ down_ep = nap.IntervalSet( start = slowwaves[0][0][2][0][0][1][:,0], end = sloww
 # COMPUTE EVENT CROSS CORRS
 ## Peak firing       
 
-cc = nap.compute_eventcorrelogram(spikes, nap.Tsd(up_ep['start'].values), binsize = 0.005, windowsize = 0.255, ep = nrem_ep, norm = False)
+cc = nap.compute_eventcorrelogram(spikes, nap.Tsd(up_ep['start'].values), binsize = 0.005, windowsize = 0.255, ep = nrem_ep, norm = True)
 tmp = pd.DataFrame(cc)
 tmp = tmp.rolling(window=4, win_type='gaussian',center=True,min_periods=1).mean(std = 2)
-dd = tmp[-0.05:0.25]
+dd = tmp[0:0.105]
 
-peaks = dd.max()
-peaklocs = dd.idxmax()
+if len(dd.columns) > 0:
+                
+    indexplot = []
+    peaks_keeping = []
+            
+        
+    for i in range(len(dd.columns)):
+        a = np.where(dd.iloc[:,i] > 0.5)
+        if len(a[0]) > 0:
+            peaks_keeping.append(dd.iloc[:,i].max())
+            res = dd.iloc[:,i].index[a]
+            indexplot.append(res[0])
 
-peak_mag_above_mean = peaks.values / spikes.restrict(up_ep)._metadata['freq'].values
-corr, p = kendalltau(peaklocs, peak_mag_above_mean)
+corr, p = kendalltau(indexplot, peaks_keeping)
 corrs.append(corr)
 pvals.append(p)
 
 plt.figure()
+plt.rc('font', size = 15)
 plt.title('Peak/ mean FR v/s UP onset')
-plt.scatter(peaklocs,peak_mag_above_mean, label = 'R = ' + str((round(corr,2))))
+plt.scatter(indexplot,peaks_keeping, label = 'R = ' + str((round(corr,2))), color = 'cornflowerblue')
 plt.xlabel('Time from UP onset (s)')
 plt.ylabel('Peak/mean FR')
 plt.legend(loc = 'upper right')
-

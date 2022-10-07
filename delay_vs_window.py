@@ -179,6 +179,7 @@ for dd,delay in enumerate(rel_angles):
     
 #%%
 plt.figure()
+plt.rc('font', size = 12)
 plt.suptitle('Bin Width = ' + str(sleep_binwidth) + ' s')
 plt.subplot(2,2,2)
 plt.imshow(anglehist_DU, aspect='auto',extent=[rel_angles[0],rel_angles[-1],

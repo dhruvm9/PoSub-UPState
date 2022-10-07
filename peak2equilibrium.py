@@ -104,7 +104,51 @@ for s in datasets:
         tmp = np.genfromtxt(file)[:,0]
         tmp = tmp.reshape(len(tmp)//2,2)/1000
         new_wake_ep = nap.IntervalSet(start = tmp[:,0], end = tmp[:,1], time_units = 's')
+    
         
+#%% 
+
+#On Nibelungen 
+
+data_directory = '/mnt/DataNibelungen/Dhruv/'
+rwpath = '/mnt/DataNibelungen/Dhruv/MEC-UPState'
+datasets = np.genfromtxt(os.path.join(rwpath,'MEC_dataset_test.list'), delimiter = '\n', dtype = str, comments = '#')
+
+corrs = []
+pvals = []
+
+depthcorrs = []
+depthpvals = []
+
+for s in datasets:
+    print(s)
+    name = s.split('/')[-1]
+    path = os.path.join(data_directory, s)
+    rawpath = os.path.join(rwpath,s)
+
+    data = nap.load_session(path, 'neurosuite')
+    data.load_neurosuite_xml(path)
+    channelorder = data.group_to_channel[0]
+    spikes = data.spikes
+    epochs = data.epochs
+    
+# ############################################################################################### 
+#     # LOAD UP AND DOWN STATE, NEW SWS AND NEW WAKE EPOCHS
+# ###############################################################################################   
+    
+    file = os.path.join(path, name +'.sws.evt')
+    new_sws_ep = data.read_neuroscope_intervals(name = 'SWS', path2file = file)
+    
+    file = os.path.join(path, name +'.evt.py.dow')
+    down_ep = data.read_neuroscope_intervals(name = 'DOWN', path2file = file)
+    
+    file = os.path.join(path, name +'.evt.py.upp')
+    up_ep = data.read_neuroscope_intervals(name = 'UP', path2file = file)
+
+
+#%% 
+
+
 ############################################################################################### 
     # COMPUTE EVENT CROSS CORRS
 ###############################################################################################  
@@ -124,23 +168,25 @@ for s in datasets:
     corrs.append(corr)
     pvals.append(p)
     
+    plt.figure()
+    plt.title('Peak/ mean FR v/s UP onset_' + s)
+    plt.scatter(peaklocs,peak_mag_above_mean, label = 'R = ' + str((round(corr,2))))
+    plt.xlabel('Time from UP onset (s)')
+    plt.ylabel('Peak/mean FR')
+    plt.legend(loc = 'upper right')
+
+    # depthcorr, depthp = kendalltau(peak_mag_above_mean, depth)
+    # depthcorrs.append(depthcorr)
+    # depthpvals.append(depthp)
+
     # plt.figure()
-    # plt.title('Peak/ mean FR v/s UP onset_' + s)
-    # plt.scatter(peaklocs,peak_mag_above_mean, label = 'R = ' + str((round(corr,2))))
-    # plt.xlabel('Time from UP onset (s)')
-    # plt.ylabel('Peak/mean FR')
+    # plt.title('Peak/ mean FR v/s Depth_' + s)
+    # plt.scatter(peak_mag_above_mean,depth, label = 'R = ' + str((round(depthcorr,2))))
+    # plt.xlabel('Peak/mean FR')
+    # plt.ylabel('Depth from top of probe (um)')
     # plt.legend(loc = 'upper right')
 
-    depthcorr, depthp = kendalltau(peak_mag_above_mean, depth)
-    depthcorrs.append(depthcorr)
-    depthpvals.append(depthp)
-
-    plt.figure()
-    plt.title('Peak/ mean FR v/s Depth_' + s)
-    plt.scatter(peak_mag_above_mean,depth, label = 'R = ' + str((round(depthcorr,2))))
-    plt.xlabel('Peak/mean FR')
-    plt.ylabel('Depth from top of probe (um)')
-    plt.legend(loc = 'upper right')
+#%% 
 
 ##Summary plot 
 summary = pd.DataFrame()

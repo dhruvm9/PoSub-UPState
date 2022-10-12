@@ -64,7 +64,7 @@ down_ep = nap.IntervalSet( start = slowwaves[0][0][2][0][0][1][:,0], end = sloww
 # COMPUTE EVENT CROSS CORRS
 ## Peak firing       
 
-cc = nap.compute_eventcorrelogram(spikes, nap.Tsd(up_ep['start'].values), binsize = 0.005, windowsize = 0.255, ep = nrem_ep, norm = True)
+cc = nap.compute_eventcorrelogram(spikes, nap.Tsd(up_ep['start'].values), binsize = 0.005, windowsize = 0.255, ep = up_ep, norm = True)
 tmp = pd.DataFrame(cc)
 tmp = tmp.rolling(window=4, win_type='gaussian',center=True,min_periods=1).mean(std = 2)
 dd = tmp[0:0.105]

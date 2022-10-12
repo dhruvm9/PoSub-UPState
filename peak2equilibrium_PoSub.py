@@ -26,6 +26,13 @@ rwpath = '/media/DataDhruv/Dropbox (Peyrache Lab)/Peyrache Lab Team Folder/Proje
 corrs = []
 pvals = []
 
+corrs_sws = []
+pvals_sws = []
+
+
+peak_above_mean = []
+uponset = []
+
 depthcorrs = []
 depthpvals = []
 
@@ -108,51 +115,62 @@ for s in datasets:
 
 #%% 
 
-
+    # plt.title('Firing rates_' + s)
+    # plt.scatter(spikes[pyr].restrict(new_sws_ep)._metadata['freq'].values,spikes[pyr].restrict(up_ep)._metadata['freq'].values)
+    # plt.xlabel('SWS rate')
+    # plt.ylabel('UP rate')
 ############################################################################################### 
     # COMPUTE EVENT CROSS CORRS
 ###############################################################################################  
       
 ## Peak firing       
-    cc2 = nap.compute_eventcorrelogram(spikes, nap.Tsd(up_ep['start'].values), binsize = 0.005, windowsize = 0.255, ep = new_sws_ep, norm = True)
+    cc2 = nap.compute_eventcorrelogram(spikes, nap.Tsd(up_ep['start'].values), binsize = 0.005, windowsize = 0.255, ep = up_ep, norm = True)
     tmp = pd.DataFrame(cc2)
     tmp = tmp.rolling(window=4, win_type='gaussian',center=True,min_periods=1).mean(std = 2)
     dd2 = tmp[0:0.105]
-    
-    #Excitatory cells only 
-    ee = dd2[pyr]
-  
+      
             
+    # #Excitatory cells only 
+    ee = dd2[pyr] 
+    
     if len(ee.columns) > 0:
                     
         indexplot_ex = []
         depths_keeping_ex = []
         peaks_keeping_ex = []
-                
+                           
             
         for i in range(len(ee.columns)):
             a = np.where(ee.iloc[:,i] > 0.5)
             if len(a[0]) > 0:
-                peaks_keeping_ex.append(ee.iloc[:,i].max())
-                depths_keeping_ex.append(depth.flatten()[ee.columns[i]])
-                res = ee.iloc[:,i].index[a]
-                indexplot_ex.append(res[0])
-            
-        
-        
+              peaks_keeping_ex.append(ee.iloc[:,i].max())
+              peak_above_mean.append(ee.iloc[:,i].max())
+              depths_keeping_ex.append(depth.flatten()[ee.columns[i]])
+                
+              res = ee.iloc[:,i].index[a]
+              indexplot_ex.append(res[0])
+              uponset.append(res[0])
+      
+    
+    
+                
+    # corr, p = kendalltau(indexplot_ex, peaks_keeping_ex)
+    
     corr, p = kendalltau(indexplot_ex, peaks_keeping_ex)
     corrs.append(corr)
     pvals.append(p)
-          
-    
-    
+        
+         
     plt.figure()
     plt.rc('font', size = 15)
     plt.title('Peak/ mean FR v/s UP onset_' + s)
-    plt.scatter(indexplot_ex,peaks_keeping_ex, label = 'R = ' + str((round(corr,2))), color = 'cornflowerblue')
+    # plt.scatter(peaklocs, peak_mag_above_mean, label = 'R = ' + str((round(corr,2))), color = 'cornflowerblue')
+    plt.scatter(indexplot_ex, peaks_keeping_ex, label = 'R_up = ' + str((round(corr,2))))
     plt.xlabel('Time from UP onset (s)')
     plt.ylabel('Peak/mean FR')
     plt.legend(loc = 'upper right')
+
+#%% 
 
     depthcorr, depthp = kendalltau(peaks_keeping_ex, depths_keeping_ex)
     depthcorrs.append(depthcorr)
@@ -165,9 +183,37 @@ for s in datasets:
     # plt.ylabel('Depth from top of probe (um)')
     # plt.legend(loc = 'upper right')
 
+
+            
+#%% Pooled plot         
+
+pooledcorr, pooledp = kendalltau(uponset, peak_above_mean)
+
+(counts,onsetbins,peakbins) = np.histogram2d(uponset,peak_above_mean,bins=[30,30],
+                                                 range=[[0,0.105],[0.5,3.6]])
+
+plt.figure()
+plt.imshow(counts.T, origin='lower', extent = [onsetbins[0],onsetbins[-1],peakbins[0],peakbins[-1]],
+                                               aspect='auto')
+plt.colorbar()
+plt.xlabel('Time from UP onset (s)')
+plt.ylabel('Peak/mean FR')
+
+
+plt.figure()
+plt.rc('font', size = 15)
+plt.title('Peak/ mean FR v/s UP onset: HDC pooled data')
+sns.kdeplot(x = uponset, y = peak_above_mean)
+plt.scatter(uponset, peak_above_mean, label = 'R = ' + str((round(pooledcorr,2))), color = 'cornflowerblue', s = 4)
+plt.xlabel('Time from UP onset (s)')
+plt.ylabel('Peak/mean FR')
+plt.legend(loc = 'upper right')
+
+    
 #%% 
 
 ##Summary plot 
+
 summary = pd.DataFrame()
 summary['corr'] = corrs
 summary['p'] = pvals

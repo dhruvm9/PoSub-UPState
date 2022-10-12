@@ -110,40 +110,40 @@ for s in datasets:
 
 #On Nibelungen 
 
-data_directory = '/mnt/DataNibelungen/Dhruv/'
-rwpath = '/mnt/DataNibelungen/Dhruv/MEC-UPState'
-datasets = np.genfromtxt(os.path.join(rwpath,'MEC_dataset_test.list'), delimiter = '\n', dtype = str, comments = '#')
+# data_directory = '/mnt/DataNibelungen/Dhruv/'
+# rwpath = '/mnt/DataNibelungen/Dhruv/MEC-UPState'
+# datasets = np.genfromtxt(os.path.join(rwpath,'MEC_dataset_test.list'), delimiter = '\n', dtype = str, comments = '#')
 
-corrs = []
-pvals = []
+# corrs = []
+# pvals = []
 
-depthcorrs = []
-depthpvals = []
+# depthcorrs = []
+# depthpvals = []
 
-for s in datasets:
-    print(s)
-    name = s.split('/')[-1]
-    path = os.path.join(data_directory, s)
-    rawpath = os.path.join(rwpath,s)
+# for s in datasets:
+#     print(s)
+#     name = s.split('/')[-1]
+#     path = os.path.join(data_directory, s)
+#     rawpath = os.path.join(rwpath,s)
 
-    data = nap.load_session(path, 'neurosuite')
-    data.load_neurosuite_xml(path)
-    channelorder = data.group_to_channel[0]
-    spikes = data.spikes
-    epochs = data.epochs
+#     data = nap.load_session(path, 'neurosuite')
+#     data.load_neurosuite_xml(path)
+#     channelorder = data.group_to_channel[0]
+#     spikes = data.spikes
+#     epochs = data.epochs
     
-# ############################################################################################### 
-#     # LOAD UP AND DOWN STATE, NEW SWS AND NEW WAKE EPOCHS
-# ###############################################################################################   
+# # ############################################################################################### 
+# #     # LOAD UP AND DOWN STATE, NEW SWS AND NEW WAKE EPOCHS
+# # ###############################################################################################   
     
-    file = os.path.join(path, name +'.sws.evt')
-    new_sws_ep = data.read_neuroscope_intervals(name = 'SWS', path2file = file)
+#     file = os.path.join(path, name +'.sws.evt')
+#     new_sws_ep = data.read_neuroscope_intervals(name = 'SWS', path2file = file)
     
-    file = os.path.join(path, name +'.evt.py.dow')
-    down_ep = data.read_neuroscope_intervals(name = 'DOWN', path2file = file)
+#     file = os.path.join(path, name +'.evt.py.dow')
+#     down_ep = data.read_neuroscope_intervals(name = 'DOWN', path2file = file)
     
-    file = os.path.join(path, name +'.evt.py.upp')
-    up_ep = data.read_neuroscope_intervals(name = 'UP', path2file = file)
+#     file = os.path.join(path, name +'.evt.py.upp')
+#     up_ep = data.read_neuroscope_intervals(name = 'UP', path2file = file)
 
 
 #%% 
@@ -175,9 +175,9 @@ for s in datasets:
     plt.ylabel('Peak/mean FR')
     plt.legend(loc = 'upper right')
 
-    # depthcorr, depthp = kendalltau(peak_mag_above_mean, depth)
-    # depthcorrs.append(depthcorr)
-    # depthpvals.append(depthp)
+    depthcorr, depthp = kendalltau(peak_mag_above_mean, depth)
+    depthcorrs.append(depthcorr)
+    depthpvals.append(depthp)
 
     # plt.figure()
     # plt.title('Peak/ mean FR v/s Depth_' + s)

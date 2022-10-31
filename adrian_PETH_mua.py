@@ -11,7 +11,6 @@ import pandas as pd
 import scipy.io
 from functions import *
 from wrappers import *
-import ipyparallel
 import os, sys
 import neuroseries as nts 
 import time 
@@ -131,16 +130,16 @@ for s in datasets:
     cc = pd.DataFrame(index = times, columns = neurons)
     tsd_dn = down_ep.as_units('ms').start.values
     
-    ep_D = nts.IntervalSet(start = down_ep.start[0], end = down_ep.end.values[-1])
+    # ep_D = nts.IntervalSet(start = down_ep.start[0], end = down_ep.end.values[-1])
     rates = []
     
     for i in neurons:
-        spk2 = mua[i].restrict(ep_D).as_units('ms').index.values
+        spk2 = mua[i].restrict(up_ep).as_units('ms').index.values
         tmp = crossCorr(tsd_dn, spk2, binsize, nbins)
         tmp = pd.DataFrame(tmp)
         tmp = tmp.rolling(window=4, win_type='gaussian',center=True,min_periods=1).mean(std = 2)
         
-        fr = len(spk2)/ep_D.tot_length('s')
+        fr = len(spk2)/up_ep.tot_length('s')
         rates.append(fr)
         cc[i] = tmp.values
         cc[i] = tmp.values/fr
@@ -148,20 +147,21 @@ for s in datasets:
         dd = cc[-250:250]
         
     if len(dd.columns) > 0:
-        tmp = dd.loc[5:] > 0.2
+        tmp = dd.loc[5:] >  np.percentile(dd.values,20) #0.2
+        
         
         tokeep = tmp.columns[tmp.sum(0) > 0]
-        ends = np.array([tmp.index[np.where(tmp[i])[0][0]] for i in tokeep])
+        ends = np.array([tmp.index[np.where(tmp[j])[0][0]] for j in tokeep])
         es = pd.Series(index = tokeep, data = ends)
         
-        tmp2 = dd.loc[-100:-5] > 0.2
+        tmp2 = dd.loc[-100:-5] > np.percentile(dd.values,20)  #0.2
 
         tokeep2 = tmp2.columns[tmp2.sum(0) > 0]
-        start = np.array([tmp2.index[np.where(tmp2[i])[0][-1]] for i in tokeep2])
+        start = np.array([tmp2.index[np.where(tmp2[k])[0][-1]] for k in tokeep2])
         st = pd.Series(index = tokeep2, data = start)
             
         ix = np.intersect1d(tokeep,tokeep2)
-        ix = [int(i) for i in ix]
+        ix = [int(m) for m in ix]
         
         
         depths_keeping = depth[ix]
@@ -193,7 +193,9 @@ for i in range(len(diff)):
 t,p = wilcoxon(dur_D,dur_V)
 
 label = ['Dorsal', 'Ventral']
-x = [0, 0.3]# the label locations
+x1 = np.random.normal(0, 0.01, size=len(dur_D))
+x2 = np.random.normal(0.3, 0.01, size=len(dur_D))
+x = np.vstack([x1, x2])# the label locations
 width = 0.3  # the width of the bars
 
 plt.figure()

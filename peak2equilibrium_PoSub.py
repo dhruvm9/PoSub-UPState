@@ -127,7 +127,7 @@ for s in datasets:
     cc2 = nap.compute_eventcorrelogram(spikes, nap.Tsd(up_ep['start'].values), binsize = 0.005, windowsize = 0.255, ep = up_ep, norm = True)
     tmp = pd.DataFrame(cc2)
     tmp = tmp.rolling(window=4, win_type='gaussian',center=True,min_periods=1).mean(std = 2)
-    dd2 = tmp[0:0.105]
+    dd2 = tmp[0:0.255]
       
             
     # #Excitatory cells only 
@@ -164,8 +164,7 @@ for s in datasets:
     plt.figure()
     plt.rc('font', size = 15)
     plt.title('Peak/ mean FR v/s UP onset_' + s)
-    # plt.scatter(peaklocs, peak_mag_above_mean, label = 'R = ' + str((round(corr,2))), color = 'cornflowerblue')
-    plt.scatter(indexplot_ex, peaks_keeping_ex, label = 'R_up = ' + str((round(corr,2))))
+    plt.scatter(indexplot_ex, peaks_keeping_ex, label = 'R = ' + str((round(corr,2))), color = 'cornflowerblue')
     plt.xlabel('Time from UP onset (s)')
     plt.ylabel('Peak/mean FR')
     plt.legend(loc = 'upper right')
@@ -203,7 +202,7 @@ plt.ylabel('Peak/mean FR')
 plt.figure()
 plt.rc('font', size = 15)
 plt.title('Peak/ mean FR v/s UP onset: HDC pooled data')
-sns.kdeplot(x = uponset, y = peak_above_mean)
+sns.kdeplot(x = uponset, y = peak_above_mean, color = 'cornflowerblue')
 plt.scatter(uponset, peak_above_mean, label = 'R = ' + str((round(pooledcorr,2))), color = 'cornflowerblue', s = 4)
 plt.xlabel('Time from UP onset (s)')
 plt.ylabel('Peak/mean FR')
@@ -225,25 +224,26 @@ plt.boxplot(corrs, positions=[0], showfliers=False, patch_artist=True, boxprops=
               capprops=dict(color='royalblue'),
               whiskerprops=dict(color='royalblue'),
               medianprops=dict(color='white', linewidth = 2))
-plt.boxplot(depthcorrs, positions=[0.3], showfliers=False, patch_artist=True, boxprops=dict(facecolor='lightsteelblue', color='lightsteelblue'),
-              capprops=dict(color='lightsteelblue'),
-              whiskerprops=dict(color='lightsteelblue'),
-              medianprops=dict(color='white', linewidth = 2))
+# plt.boxplot(depthcorrs, positions=[0.3], showfliers=False, patch_artist=True, boxprops=dict(facecolor='lightsteelblue', color='lightsteelblue'),
+#               capprops=dict(color='lightsteelblue'),
+#               whiskerprops=dict(color='lightsteelblue'),
+#               medianprops=dict(color='white', linewidth = 2))
 
 x1 = np.random.normal(0, 0.01, size=len(summary['corr'][summary['p'] < 0.05]))
 x2 = np.random.normal(0, 0.01, size=len(summary['corr'][summary['p'] >= 0.05]))
-x3 = np.random.normal(0.3, 0.01, size=len(summary['depthcorr'][summary['depthp'] < 0.05]))
-x4 = np.random.normal(0.3, 0.01, size=len(summary['depthcorr'][summary['depthp'] >= 0.05]))
+# x3 = np.random.normal(0.3, 0.01, size=len(summary['depthcorr'][summary['depthp'] < 0.05]))
+# x4 = np.random.normal(0.3, 0.01, size=len(summary['depthcorr'][summary['depthp'] >= 0.05]))
 
-plt.plot(x1, summary['corr'][summary['p'] < 0.05], 'x', color = 'k', fillstyle = 'none', markersize = 6, zorder =3)
-plt.plot(x2, summary['corr'][summary['p'] >= 0.05], '.', color = 'k', fillstyle = 'none', markersize = 6, zorder =3)
-plt.plot(x3, summary['depthcorr'][summary['depthp'] < 0.05], 'x', color = 'k', fillstyle = 'none', markersize = 6, zorder =3, label = 'p < 0.05')
-plt.plot(x4, summary['depthcorr'][summary['depthp'] >= 0.05], '.', color = 'k', fillstyle = 'none', markersize = 6, zorder =3, label = 'p >= 0.05')
-plt.axhline(0, color = 'silver')
-plt.xticks([0, 0.3],['vs delay', 'vs depth'])
-plt.title('Peak/mean FR v/s UP onset - Summary')
+plt.plot(x1, summary['corr'][summary['p'] < 0.05], 'x', color = 'k', fillstyle = 'none', markersize = 6, zorder =3, label = 'p < 0.05')
+plt.plot(x2, summary['corr'][summary['p'] >= 0.05], '.', color = 'k', fillstyle = 'none', markersize = 6, zorder =3,  label = 'p >= 0.05')
+# plt.plot(x3, summary['depthcorr'][summary['depthp'] < 0.05], 'x', color = 'k', fillstyle = 'none', markersize = 6, zorder =3)
+# plt.plot(x4, summary['depthcorr'][summary['depthp'] >= 0.05], '.', color = 'k', fillstyle = 'none', markersize = 6, zorder =3)
+# plt.axhline(0, color = 'silver')
+# plt.xticks([0, 0.3],['vs delay', 'vs depth'])
+plt.xticks([])
+# plt.title('Peak/mean FR v/s UP onset - Summary')
 plt.legend(loc = 'upper right')
-plt.ylabel('Tau value')
+plt.ylabel('Peak/mean v/s UP onset (R)')
 
 
 

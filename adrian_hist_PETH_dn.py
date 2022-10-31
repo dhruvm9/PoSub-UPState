@@ -137,13 +137,13 @@ for s in datasets:
             
     for i in neurons:
         # spk2 = spikes[i].restrict(ep_D).as_units('ms').index.values
-        spk2 = spikes[i].restrict(new_sws_ep).as_units('ms').index.values
+        spk2 = spikes[i].restrict(up_ep).as_units('ms').index.values
         tmp = crossCorr(tsd_dn, spk2, binsize, nbins)
         tmp = pd.DataFrame(tmp)
         tmp = tmp.rolling(window=4, win_type='gaussian',center=True,min_periods=1).mean(std = 2)
         
         # fr = len(spk2)/ep_D.tot_length('s')
-        fr = len(spk2)/new_sws_ep.tot_length('s')
+        fr = len(spk2)/up_ep.tot_length('s')
         rates.append(fr)
         cc[i] = tmp.values
         cc[i] = tmp.values/fr
@@ -203,8 +203,8 @@ for s in datasets:
         ends_ex = np.array([tmp_ex.index[np.where(tmp_ex[i])[0][0]] for i in tokeep_ex])
         es_ex = pd.Series(index = tokeep_ex, data = ends_ex)
         
-    #     # tmp2 = dd.loc[-250:-5] > 0.2
-        tmp2_ex = ee.loc[-100:-5] > 0.5
+        tmp2_ex = dd.loc[-250:-5] > 0.2
+        # tmp2_ex = ee.loc[-100:-5] > 0.5
     
         tokeep2_ex = tmp2_ex.columns[tmp2_ex.sum(0) > 0]
         start_ex = np.array([tmp2_ex.index[np.where(tmp2_ex[i])[0][-1]] for i in tokeep2_ex])
@@ -372,19 +372,20 @@ plt.boxplot(allcoefs_dn_ex, positions=[0.3], showfliers=False, patch_artist=True
               whiskerprops=dict(color='lightsteelblue'),
               medianprops=dict(color='white', linewidth = 2))
 
-x1 = np.random.normal(0, 0.01, size=len(a['allcoefs_up_ex'][a['pval_up_ex'] > 0.05]))
-x2 = np.random.normal(0.3, 0.01, size=len(a['allcoefs_dn_ex'][a['pval_dn_ex'] > 0.05]))
+x1 = np.random.normal(0, 0.01, size=len(a['allcoefs_up_ex'][a['pval_up_ex'] >= 0.05]))
+x2 = np.random.normal(0.3, 0.01, size=len(a['allcoefs_dn_ex'][a['pval_dn_ex'] >= 0.05]))
 x3 = np.random.normal(0, 0.01, size=len(a['allcoefs_up_ex'][a['pval_up_ex'] < 0.05]))
 x4 = np.random.normal(0.3, 0.01, size=len(a['allcoefs_dn_ex'][a['pval_dn_ex'] < 0.05]))
 
-plt.plot(x1, a['allcoefs_up_ex'][a['pval_up_ex'] > 0.05], '.', color = 'k', fillstyle = 'none', markersize = 6, zorder =3)
-plt.plot(x2, a['allcoefs_dn_ex'][a['pval_dn_ex'] > 0.05], '.', color = 'k', fillstyle = 'none', markersize = 6, zorder =3)
-plt.plot(x3, a['allcoefs_up_ex'][a['pval_up_ex'] < 0.05], 'x', color = 'k', fillstyle = 'none', markersize = 6, zorder =3)
+plt.plot(x1, a['allcoefs_up_ex'][a['pval_up_ex'] >= 0.05], '.', color = 'k', fillstyle = 'none', markersize = 6, zorder =3)
+plt.plot(x2, a['allcoefs_dn_ex'][a['pval_dn_ex'] >= 0.05], '.', color = 'k', fillstyle = 'none', markersize = 6, zorder =3, label = 'p >= 0.05')
+plt.plot(x3, a['allcoefs_up_ex'][a['pval_up_ex'] < 0.05], 'x', color = 'k', fillstyle = 'none', markersize = 6, zorder =3, label = 'p < 0.05')
 plt.plot(x4, a['allcoefs_dn_ex'][a['pval_dn_ex'] < 0.05], 'x', color = 'k', fillstyle = 'none', markersize = 6, zorder =3)
 plt.axhline(0, color = 'silver')
 plt.xticks([0, 0.3],['DOWN-UP', 'UP-DOWN'])
 plt.title('Sequential activation of Ex cells')
-plt.ylabel('Tau value')
+plt.ylabel('Lag v/s depth (R)')
+plt.legend(loc = 'upper right')
 
 # ############################################################################################### 
 

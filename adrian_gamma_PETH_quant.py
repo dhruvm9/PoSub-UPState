@@ -419,30 +419,30 @@ for s in datasets:
 DU_df = pd.DataFrame(data = (np.vstack([diffcorr_DU, diffp_DU])).T, columns = ['DU', 'pval'])
 UD_df = pd.DataFrame(data = (np.vstack([diffcorr_UD, diffp_UD])).T, columns = ['UD', 'pval'])
 
-# plt.figure()    
-# plt.title('Differental correlations')
-# plt.boxplot(DU_df['DU'], positions = [0],showfliers=False, patch_artist=True, boxprops=dict(facecolor='cornflowerblue', color='cornflowerblue'),
-#             capprops=dict(color='cornflowerblue'),
-#             whiskerprops=dict(color='cornflowerblue'),
-#             medianprops=dict(color='white', linewidth = 2))
-# plt.boxplot(UD_df['UD'], positions = [0.3],showfliers=False, patch_artist=True, boxprops=dict(facecolor='lightsteelblue', color='lightsteelblue'),
-#             capprops=dict(color='lightsteelblue'),
-#             whiskerprops=dict(color='lightsteelblue'),
-#             medianprops=dict(color='white', linewidth = 2))
+plt.figure()    
+plt.title('Differental correlations')
+plt.boxplot(DU_df['DU'], positions = [0],showfliers=False, patch_artist=True, boxprops=dict(facecolor='cornflowerblue', color='cornflowerblue'),
+            capprops=dict(color='cornflowerblue'),
+            whiskerprops=dict(color='cornflowerblue'),
+            medianprops=dict(color='white', linewidth = 2))
+plt.boxplot(UD_df['UD'], positions = [0.3],showfliers=False, patch_artist=True, boxprops=dict(facecolor='lightsteelblue', color='lightsteelblue'),
+            capprops=dict(color='lightsteelblue'),
+            whiskerprops=dict(color='lightsteelblue'),
+            medianprops=dict(color='white', linewidth = 2))
 
-# x1 = np.random.normal(0, 0.01, size=len(DU_df['DU'][DU_df['pval'] < 0.05]))
-# x2 = np.random.normal(0.3, 0.01, size=len(UD_df['UD'][UD_df['pval'] < 0.05]))
-# x3 = np.random.normal(0, 0.01, size=len(DU_df['DU'][DU_df['pval'] >= 0.05]))
-# x4 = np.random.normal(0.3, 0.01, size=len(UD_df['UD'][UD_df['pval'] >= 0.05]))
+x1 = np.random.normal(0, 0.01, size=len(DU_df['DU'][DU_df['pval'] < 0.05]))
+x2 = np.random.normal(0.3, 0.01, size=len(UD_df['UD'][UD_df['pval'] < 0.05]))
+x3 = np.random.normal(0, 0.01, size=len(DU_df['DU'][DU_df['pval'] >= 0.05]))
+x4 = np.random.normal(0.3, 0.01, size=len(UD_df['UD'][UD_df['pval'] >= 0.05]))
 
-# plt.plot(x1, DU_df['DU'][DU_df['pval'] < 0.05] , 'x', color = 'k', fillstyle = 'none', markersize = 6, zorder =3, label = 'p < 0.05')
-# plt.plot(x2, UD_df['UD'][UD_df['pval'] < 0.05] , 'x', color = 'k', fillstyle = 'none', markersize = 6, zorder =3)
-# plt.plot(x3, DU_df['DU'][DU_df['pval'] > 0.05] , '.', color = 'k', fillstyle = 'none', markersize = 6, zorder =3, label = 'p >= 0.05')
-# plt.plot(x4, UD_df['UD'][UD_df['pval'] > 0.05] , '.', color = 'k', fillstyle = 'none', markersize = 6, zorder =3)
-# plt.xticks([0, 0.3],['DU', 'UD'])
-# plt.axhline(0, color = 'silver')
-# plt.ylabel('Lag v/s depth (R)')   
-# plt.legend(loc = 'upper right')
+plt.plot(x1, DU_df['DU'][DU_df['pval'] < 0.05] , 'x', color = 'k', fillstyle = 'none', markersize = 6, zorder =3, label = 'p < 0.05')
+plt.plot(x2, UD_df['UD'][UD_df['pval'] < 0.05] , 'x', color = 'k', fillstyle = 'none', markersize = 6, zorder =3)
+plt.plot(x3, DU_df['DU'][DU_df['pval'] > 0.05] , '.', color = 'k', fillstyle = 'none', markersize = 6, zorder =3, label = 'p >= 0.05')
+plt.plot(x4, UD_df['UD'][UD_df['pval'] > 0.05] , '.', color = 'k', fillstyle = 'none', markersize = 6, zorder =3)
+plt.xticks([0, 0.3],['DU', 'UD'])
+plt.axhline(0, color = 'silver')
+plt.ylabel('Lag v/s depth (R)')   
+plt.legend(loc = 'upper right')
 
 posdf = pd.DataFrame(data = (np.vstack([pos_slope, diffp_DU])).T, columns = ['speed', 'pval'])
 negdf = pd.DataFrame(data = (np.vstack([neg_slope, diffp_UD])).T, columns = ['speed', 'pval'])
@@ -467,17 +467,47 @@ plt.ylabel('Velocity (mm/s)')
 # plt.yticks([0, -400, -800])
 # plt.legend(loc = 'upper right')
 
+#%% 
+
+#Run adrian_hist_PETH_up before running this
+
+unit_speed = regs['spd_ex']
 
 corr, p = pearsonr(posdf['speed'],unit_speed)
 m,b = np.polyfit(posdf['speed'],unit_speed,1)
 y = m*posdf['speed'] + b
-
 plt.figure()
 plt.scatter(posdf['speed'].values,unit_speed, label = 'R = ' + str(round(corr,2)), color = 'k')
 plt.plot(posdf['speed'].values,y, color = 'k')
 plt.xlabel('LFP speed (mm/s)')
 plt.ylabel('Unit speed (mm/s)')
 plt.legend(loc = 'upper right')
+
+#%% 
+
+#Run adrian_hist_PETH_up before running this
+
+unit_speed = regs['spd_ex'][regs['pval_ex'] < 0.05]
+
+plt.figure()    
+plt.title('DU Speed')
+plt.boxplot(unit_speed, positions = [0], showfliers=False, patch_artist=True, boxprops=dict(facecolor='darkslategray', color='darkslategray'),
+            capprops=dict(color='darkslategray'),
+            whiskerprops=dict(color='darkslategray'),
+            medianprops=dict(color='white', linewidth = 2))
+plt.boxplot(posdf['speed'][posdf['pval'] < 0.05], positions = [0.3], showfliers=False, patch_artist=True, boxprops=dict(facecolor='darkslategray', color='darkslategray'),
+            capprops=dict(color='darkslategray'),
+            whiskerprops=dict(color='darkslategray'),
+            medianprops=dict(color='white', linewidth = 2))
+
+x1 = np.random.normal(0.3, 0.01, size=len(posdf['speed'][posdf['pval'] < 0.05]))
+x2 = np.random.normal(0, 0.01, size=len(unit_speed))
+plt.plot(x1, posdf['speed'][posdf['pval'] < 0.05], '.', color = 'k', fillstyle = 'none', markersize = 8, zorder =3)
+plt.plot(x2, unit_speed, '.', color = 'k', fillstyle = 'none', markersize = 8, zorder =3)
+plt.xticks([0, 0.3],['Spikes', 'LFP'])
+plt.ylabel('Velocity (mm/s)')  
+
+ 
     
 #%%
 #Units vs LFP
@@ -492,18 +522,24 @@ plt.legend(loc = 'upper right')
 # plt.xlabel('Unit R (UD)')
 # plt.ylabel('LFP R (UD)')
 
-# corr, p = pearsonr(a['allcoefs_up_ex'],DU_df['DU'])
-# m,b = np.polyfit(a['allcoefs_up_ex'],DU_df['DU'],1)
-# y = m*a['allcoefs_up_ex'] + b
+#%% 
 
-# plt.figure()
-# plt.scatter(a['allcoefs_up_ex'],DU_df['DU'], label = 'R = ' + str(round(corr,2)), color = 'k')
-# plt.plot(a['allcoefs_up_ex'],y, color = 'k')
-# plt.xlabel('Unit R (DU)')
-# plt.ylabel('LFP differential R (DU)')
-# plt.yticks([-1, -0.5, 0, 0.5, 1])
-# plt.xticks([-0.5, -0.25, 0, 0.25])
-# plt.legend(loc = 'upper right')
+#Run adrian_hist_PETH_dn before running this
+
+corr, p = pearsonr(a['allcoefs_up_ex'],DU_df['DU'])
+m,b = np.polyfit(a['allcoefs_up_ex'],DU_df['DU'],1)
+y = m*a['allcoefs_up_ex'] + b
+
+plt.figure()
+plt.scatter(a['allcoefs_up_ex'],DU_df['DU'], label = 'R = ' + str(round(corr,2)), color = 'k')
+plt.plot(a['allcoefs_up_ex'],y, color = 'k')
+plt.xlabel('Unit R (DU)')
+plt.ylabel('LFP differential R (DU)')
+plt.yticks([-1, -0.5, 0, 0.5, 1])
+plt.xticks([-0.5, -0.25, 0, 0.25])
+plt.legend(loc = 'upper right')
+
+#%%
 
 # plt.figure()
 # plt.scatter(a['allcoefs_dn_ex'],UD_df['UD'])

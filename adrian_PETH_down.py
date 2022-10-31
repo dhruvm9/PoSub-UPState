@@ -125,14 +125,14 @@ for s in datasets:
     
     for i in neurons:
         # spk2 = spikes[i].restrict(ep_D).as_units('ms').index.values
-        spk2 = spikes[i].restrict(new_sws_ep).as_units('ms').index.values
+        spk2 = spikes[i].restrict(up_ep).as_units('ms').index.values
         tmp = crossCorr(tsd_dn, spk2, binsize, nbins)
         tmp = pd.DataFrame(tmp)
         tmp = tmp.rolling(window=4, win_type='gaussian',center=True,min_periods=1).mean(std = 2)
         
         
         # fr = len(spk2)/ep_D.tot_length('s')
-        fr = len(spk2)/new_sws_ep.tot_length('s')
+        fr = len(spk2)/up_ep.tot_length('s')
         rates.append(fr)
         cc[i] = tmp.values
         cc[i] = tmp.values/fr
@@ -165,11 +165,11 @@ for s in datasets:
         
         fig, ax = plt.subplots()
         #cax = ax.imshow(finalRates.T,extent=[-250 , 150, len(interneuron) , 1],aspect = 'auto', cmap = 'hot')
-        cax = ax.imshow(finalRates.T,extent=[-250 , 50, len(neurons) , 1],aspect = 'auto', cmap = 'inferno')
+        cax = ax.imshow(finalRates.T,extent=[-250 , 50, len(neurons) , 1],aspect = 'auto', cmap = 'inferno', vmin = 0, vmax = 3.54)
         # plt.imshow(finalRates.T,extent=[-250 , 250, len(neurons) , 1],aspect = 'auto', cmap = 'hot')        
         # plt.imshow(finalRates.T,extent=[-250 , 250, len(pyr) , 1],aspect = 'auto', cmap = 'hot')        
-        cbar = fig.colorbar(cax, ticks=[0, 2.26], label = 'Norm. Firing Rate')
-        cbar.ax.set_yticklabels(['0', 2.26])
+        cbar = fig.colorbar(cax, ticks=[0, finalRates.values.max()], label = 'Norm. Firing Rate')
+        cbar.ax.set_yticklabels(['0', str(round(finalRates.values.max(),2))])
         plt.title('Event-related Xcorr, aligned to DOWN state onset_' + s)
         ax.set_ylabel('Neuron number')
         ax.set_xlabel('Lag (ms)')

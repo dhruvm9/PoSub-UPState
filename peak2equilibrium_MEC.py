@@ -19,7 +19,7 @@ import seaborn as sns
 
 #On Nibelungen 
 
-data_directory = '/mnt/DataNibelungen/Dhruv/'
+data_directory = '/media/DataAdrienBig/PeyracheLabData/Dhruv/Kraken'
 rwpath = '/mnt/DataNibelungen/Dhruv/MEC-UPState'
 datasets = np.genfromtxt(os.path.join(rwpath,'MEC_dataset_test.list'), delimiter = '\n', dtype = str, comments = '#')
 
@@ -28,6 +28,9 @@ pvals = []
 
 depthcorrs = []
 depthpvals = []
+
+peak_above_mean = []
+uponset = []
 
 for s in datasets:
     print(s)
@@ -78,8 +81,10 @@ for s in datasets:
             a = np.where(dd2.iloc[:,i] > 0.5)
             if len(a[0]) > 0:
                 peaks_keeping.append(dd2.iloc[:,i].max())
+                peak_above_mean.append(dd2.iloc[:,i].max())
                 res = dd2.iloc[:,i].index[a]
                 indexplot.append(res[0])
+                uponset.append(res[0])
 
     corr, p = kendalltau(indexplot, peaks_keeping)
     corrs.append(corr)
@@ -93,38 +98,63 @@ for s in datasets:
     plt.ylabel('Peak/mean FR')
     plt.legend(loc = 'upper right')
 
+#%% Pooled plot         
+
+pooledcorr, pooledp = kendalltau(uponset, peak_above_mean)
+
+(counts,onsetbins,peakbins) = np.histogram2d(uponset,peak_above_mean,bins=[30,30],
+                                                 range=[[0,0.105],[0.5,3.6]])
+
+plt.figure()
+plt.imshow(counts.T, origin='lower', extent = [onsetbins[0],onsetbins[-1],peakbins[0],peakbins[-1]],
+                                               aspect='auto')
+plt.colorbar()
+plt.xlabel('Time from UP onset (s)')
+plt.ylabel('Peak/mean FR')
+
+
+plt.figure()
+plt.rc('font', size = 15)
+plt.title('Peak/ mean FR v/s UP onset: MEC pooled data')
+sns.kdeplot(x = uponset, y = peak_above_mean, color = 'cornflowerblue')
+plt.scatter(uponset, peak_above_mean, label = 'R = ' + str((round(pooledcorr,2))), color = 'cornflowerblue', s = 4)
+plt.xlabel('Time from UP onset (s)')
+plt.ylabel('Peak/mean FR')
+plt.legend(loc = 'upper right')
+
 #%% 
 
-##Summary plot 
 summary = pd.DataFrame()
 summary['corr'] = corrs
 summary['p'] = pvals
-summary['depthcorr'] = depthcorrs
-summary['depthp'] = depthpvals 
+# summary['depthcorr'] = depthcorrs
+# summary['depthp'] = depthpvals 
 
 plt.figure()
 plt.boxplot(corrs, positions=[0], showfliers=False, patch_artist=True, boxprops=dict(facecolor='royalblue', color='royalblue'),
               capprops=dict(color='royalblue'),
               whiskerprops=dict(color='royalblue'),
               medianprops=dict(color='white', linewidth = 2))
-plt.boxplot(depthcorrs, positions=[0.3], showfliers=False, patch_artist=True, boxprops=dict(facecolor='lightsteelblue', color='lightsteelblue'),
-              capprops=dict(color='lightsteelblue'),
-              whiskerprops=dict(color='lightsteelblue'),
-              medianprops=dict(color='white', linewidth = 2))
+# plt.boxplot(depthcorrs, positions=[0.3], showfliers=False, patch_artist=True, boxprops=dict(facecolor='lightsteelblue', color='lightsteelblue'),
+#               capprops=dict(color='lightsteelblue'),
+#               whiskerprops=dict(color='lightsteelblue'),
+#               medianprops=dict(color='white', linewidth = 2))
 
 x1 = np.random.normal(0, 0.01, size=len(summary['corr'][summary['p'] < 0.05]))
-x2 = np.random.normal(0.3, 0.01, size=len(summary['depthcorr'][summary['depthp'] < 0.05]))
-x3 = np.random.normal(0.3, 0.01, size=len(summary['depthcorr'][summary['depthp'] >= 0.05]))
+x2 = np.random.normal(0, 0.01, size=len(summary['corr'][summary['p'] >= 0.05]))
+# x3 = np.random.normal(0.3, 0.01, size=len(summary['depthcorr'][summary['depthp'] < 0.05]))
+# x4 = np.random.normal(0.3, 0.01, size=len(summary['depthcorr'][summary['depthp'] >= 0.05]))
 
-plt.plot(x1, summary['corr'][summary['p'] < 0.05], '.', color = 'k', fillstyle = 'none', markersize = 6, zorder =3)
-plt.plot(x2, summary['depthcorr'][summary['depthp'] < 0.05], '.', color = 'k', fillstyle = 'none', markersize = 6, zorder =3, label = 'p < 0.05')
-plt.plot(x3, summary['depthcorr'][summary['depthp'] >= 0.05], 'x', color = 'k', fillstyle = 'none', markersize = 6, zorder =3, label = 'p >= 0.05')
-plt.axhline(0, color = 'silver')
-plt.xticks([0, 0.3],['vs delay', 'vs depth'])
-plt.title('Peak/mean FR v/s UP onset - Summary')
+plt.plot(x1, summary['corr'][summary['p'] < 0.05], 'x', color = 'k', fillstyle = 'none', markersize = 6, zorder =3, label = 'p < 0.05')
+plt.plot(x2, summary['corr'][summary['p'] >= 0.05], '.', color = 'k', fillstyle = 'none', markersize = 6, zorder =3,  label = 'p >= 0.05')
+# plt.plot(x3, summary['depthcorr'][summary['depthp'] < 0.05], 'x', color = 'k', fillstyle = 'none', markersize = 6, zorder =3)
+# plt.plot(x4, summary['depthcorr'][summary['depthp'] >= 0.05], '.', color = 'k', fillstyle = 'none', markersize = 6, zorder =3)
+# plt.axhline(0, color = 'silver')
+# plt.xticks([0, 0.3],['vs delay', 'vs depth'])
+plt.xticks([])
+# plt.title('Peak/mean FR v/s UP onset - Summary')
 plt.legend(loc = 'upper right')
-plt.ylabel('Tau value')
-
+plt.ylabel('Peak/mean v/s UP onset (R)')
 
 
 

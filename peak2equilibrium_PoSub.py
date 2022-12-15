@@ -15,11 +15,15 @@ import matplotlib.pyplot as plt
 from scipy.stats import kendalltau, pearsonr, wilcoxon, mannwhitneyu
 import seaborn as sns
 
+#Parameters
+##Ex cells, norm = True, period = 0- 100 ms, UP onset ---> 9/16 significant 
+
 
 #%% On Lab PC
 data_directory = '/media/DataDhruv/Dropbox (Peyrache Lab)/Peyrache Lab Team Folder/Data/AdrianPoSub/###AllPoSub'
 # datasets = np.loadtxt(os.path.join(data_directory,'dataset_test.list'), delimiter = '\n', dtype = str, comments = '#')
 datasets = np.loadtxt(os.path.join(data_directory,'dataset_Hor_DM.list'), delimiter = '\n', dtype = str, comments = '#')
+# datasets = np.loadtxt(os.path.join(data_directory,'dataset_Ver_DM.list'), delimiter = '\n', dtype = str, comments = '#')
 
 rwpath = '/media/DataDhruv/Dropbox (Peyrache Lab)/Peyrache Lab Team Folder/Projects/PoSub-UPstate/Data'
 
@@ -127,8 +131,8 @@ for s in datasets:
     cc2 = nap.compute_eventcorrelogram(spikes, nap.Tsd(up_ep['start'].values), binsize = 0.005, windowsize = 0.255, ep = up_ep, norm = True)
     tmp = pd.DataFrame(cc2)
     tmp = tmp.rolling(window=4, win_type='gaussian',center=True,min_periods=1).mean(std = 2)
-    dd2 = tmp[0:0.255]
-      
+    # dd2 = tmp[0:0.255]
+    dd2 = tmp[0:0.105]  
             
     # #Excitatory cells only 
     ee = dd2[pyr] 

@@ -203,8 +203,8 @@ for s in datasets:
         ends_ex = np.array([tmp_ex.index[np.where(tmp_ex[i])[0][0]] for i in tokeep_ex])
         es_ex = pd.Series(index = tokeep_ex, data = ends_ex)
         
-        tmp2_ex = dd.loc[-250:-5] > 0.2
-        # tmp2_ex = ee.loc[-100:-5] > 0.5
+        # tmp2_ex = dd.loc[-250:-5] > 0.2
+        tmp2_ex = ee.loc[-100:-5] > 0.5
     
         tokeep2_ex = tmp2_ex.columns[tmp2_ex.sum(0) > 0]
         start_ex = np.array([tmp2_ex.index[np.where(tmp2_ex[i])[0][-1]] for i in tokeep2_ex])

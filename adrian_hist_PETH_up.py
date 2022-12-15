@@ -135,8 +135,8 @@ for s in datasets:
         cc[i] = tmp.values
         cc[i] = tmp.values/fr
                      
-        # dd = cc[0:100]
-        dd = cc[0:250]
+        dd = cc[0:100]
+        # dd = cc[0:250]
                
     #Cell types 
     ee = dd[pyr]

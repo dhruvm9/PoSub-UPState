@@ -392,6 +392,15 @@ for s in datasets:
     for i in range(len(troughs)):
            yneg[i] = (mneg*troughs[i]) + bneg
     
+    plt.figure()
+    plt.title(s)
+    plt.scatter(peakval, depth, label = 'R = ' + str(round(corr_DU,2)), color = 'cornflowerblue')   
+    plt.plot(peakval,ypos, label = 'speed = ' + str(round((abs(-(mpos))),2)), color = 'cornflowerblue')
+    plt.xlabel('DU Lag (ms)')
+    plt.ylabel('Depth (um)')
+    plt.yticks([0, -400, -800])
+    plt.legend(loc = 'upper right')
+
 
     
     # plt.figure(figsize = (24,12))
@@ -459,13 +468,6 @@ plt.plot(x1, posdf['speed'][posdf['pval'] < 0.05], '.', color = 'k', fillstyle =
 plt.xticks([])
 plt.ylabel('Velocity (mm/s)')   
 
-# plt.figure()
-# plt.scatter(peakval, depth, label = 'R = ' + str(round(corr_DU,2)), color = 'cornflowerblue')   
-# plt.plot(peakval,ypos, label = 'speed = ' + str(round((abs(-(mpos))),2)), color = 'cornflowerblue')
-# plt.xlabel('DU Lag (ms)')
-# plt.ylabel('Depth (um)')
-# plt.yticks([0, -400, -800])
-# plt.legend(loc = 'upper right')
 
 #%% 
 

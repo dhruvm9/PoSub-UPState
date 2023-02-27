@@ -22,7 +22,7 @@ import seaborn as sns
 #%% On Lab PC
 data_directory = '/media/DataDhruv/Dropbox (Peyrache Lab)/Peyrache Lab Team Folder/Data/AdrianPoSub/###AllPoSub'
 # datasets = np.loadtxt(os.path.join(data_directory,'dataset_test.list'), delimiter = '\n', dtype = str, comments = '#')
-datasets = np.loadtxt(os.path.join(data_directory,'dataset_Hor_DM.list'), delimiter = '\n', dtype = str, comments = '#')
+datasets = np.genfromtxt(os.path.join(data_directory,'dataset_Hor_DM.list'), delimiter = '\n', dtype = str, comments = '#')
 # datasets = np.loadtxt(os.path.join(data_directory,'dataset_Ver_DM.list'), delimiter = '\n', dtype = str, comments = '#')
 
 rwpath = '/media/DataDhruv/Dropbox (Peyrache Lab)/Peyrache Lab Team Folder/Projects/PoSub-UPstate/Data'
@@ -33,9 +33,12 @@ pvals = []
 corrs_sws = []
 pvals_sws = []
 
+ratecorrs = []
+ratepvals = []
 
 peak_above_mean = []
 uponset = []
+allrates = []
 
 depthcorrs = []
 depthpvals = []
@@ -130,10 +133,12 @@ for s in datasets:
 ## Peak firing       
     cc2 = nap.compute_eventcorrelogram(spikes, nap.Tsd(up_ep['start'].values), binsize = 0.005, windowsize = 0.255, ep = up_ep, norm = True)
     tmp = pd.DataFrame(cc2)
-    tmp = tmp.rolling(window=4, win_type='gaussian',center=True,min_periods=1).mean(std = 2)
+    tmp = tmp.rolling(window=8, win_type='gaussian',center=True,min_periods=1).mean(std = 2)
     # dd2 = tmp[0:0.255]
-    dd2 = tmp[0:0.105]  
+    dd2 = tmp[0:0.155]  
             
+    rates = spikes[pyr].restrict(up_ep)._metadata['rate'].values
+    
     # #Excitatory cells only 
     ee = dd2[pyr] 
     
@@ -142,6 +147,7 @@ for s in datasets:
         indexplot_ex = []
         depths_keeping_ex = []
         peaks_keeping_ex = []
+        rates_keeping_ex = []
                            
             
         for i in range(len(ee.columns)):
@@ -150,14 +156,32 @@ for s in datasets:
               peaks_keeping_ex.append(ee.iloc[:,i].max())
               peak_above_mean.append(ee.iloc[:,i].max())
               depths_keeping_ex.append(depth.flatten()[ee.columns[i]])
+              rates_keeping_ex.append(rates[i])
+              allrates.append(rates[i])
                 
               res = ee.iloc[:,i].index[a]
               indexplot_ex.append(res[0])
               uponset.append(res[0])
       
-    
-    
-                
+#%% 
+
+#     a = []
+#     for i in ee.columns:
+#         if ee[i].values[-1] < 0.9:
+#             a.append(i)  
+      
+# #%%    
+# #Best examples 
+    # plt.figure()
+    # plt.plot(tmp[pyr][23][-0.05:0.2])
+    # plt.plot(tmp[pyr][50][-0.05:0.2])
+    # plt.axhline(1, linestyle = '--', color = 'silver')
+    # plt.axvline(0, color = 'k')
+    # plt.yticks([])
+    # plt.gca().set_box_aspect(1)
+   
+
+#%%             
     # corr, p = kendalltau(indexplot_ex, peaks_keeping_ex)
     
     corr, p = kendalltau(indexplot_ex, peaks_keeping_ex)
@@ -167,11 +191,12 @@ for s in datasets:
          
     plt.figure()
     plt.rc('font', size = 15)
-    plt.title('Peak/ mean FR v/s UP onset_' + s)
+    plt.title('Peak-mean rate ratio v/s UP onset_' + s)
     plt.scatter(indexplot_ex, peaks_keeping_ex, label = 'R = ' + str((round(corr,2))), color = 'cornflowerblue')
     plt.xlabel('Time from UP onset (s)')
-    plt.ylabel('Peak/mean FR')
+    plt.ylabel('Peak-mean rate ratio')
     plt.legend(loc = 'upper right')
+    plt.gca().set_box_aspect(1)
 
 #%% 
 
@@ -181,36 +206,65 @@ for s in datasets:
 
     # plt.figure()
     # plt.title('Peak/ mean FR v/s Depth_' + s)
-    # plt.scatter(peaks_keeping_ex,depth, label = 'R = ' + str((round(depthcorr,2))))
+    # plt.scatter(peaks_keeping_ex,depths_keeping_ex, label = 'R = ' + str((round(depthcorr,2))))
     # plt.xlabel('Peak/mean FR')
     # plt.ylabel('Depth from top of probe (um)')
+    # plt.legend(loc = 'upper right')
+    
+#%% 
+
+    ratecorr, ratep = kendalltau(rates_keeping_ex, indexplot_ex)
+    ratecorrs.append(ratecorr)
+    ratepvals.append(ratep)
+    
+    # plt.figure()
+    # plt.title('NREM FR v/s UP onset delay_' + s)
+    # plt.scatter(rates_keeping_ex,indexplot_ex, label = 'R = ' + str((round(ratecorr,2))))
+    # plt.xlabel('Mean NREM FR')
+    # plt.ylabel('UP onset delay (ms)')
     # plt.legend(loc = 'upper right')
 
 
             
 #%% Pooled plot         
 
+binsize = 0.005
 pooledcorr, pooledp = kendalltau(uponset, peak_above_mean)
+(counts,onsetbins,peakbins) = np.histogram2d(uponset,peak_above_mean,bins=[len(np.arange(0,0.155,binsize))+1,len(np.arange(0,0.155,binsize))+1],
+                                                 range=[[-0.0025,0.1575],[0.5,3.6]])
 
-(counts,onsetbins,peakbins) = np.histogram2d(uponset,peak_above_mean,bins=[30,30],
-                                                 range=[[0,0.105],[0.5,3.6]])
+masked_array = np.ma.masked_where(counts == 0, counts)
+cmap = plt.cm.viridis  # Can be any colormap that you want after the cm
+cmap.set_bad(color='white')
 
 plt.figure()
-plt.imshow(counts.T, origin='lower', extent = [onsetbins[0],onsetbins[-1],peakbins[0],peakbins[-1]],
-                                               aspect='auto')
-plt.colorbar()
-plt.xlabel('Time from UP onset (s)')
-plt.ylabel('Peak/mean FR')
+plt.imshow(masked_array.T, origin='lower', extent = [onsetbins[0],onsetbins[-1],peakbins[0],peakbins[-1]],
+                                               aspect='auto', cmap = cmap)
+plt.colorbar(ticks = [min(counts.flatten()),max(counts.flatten())])
+plt.xlabel('UP onset delay (s)')
+plt.ylabel('Peak-mean rate ratio')
+plt.gca().set_box_aspect(1)
 
+y_est = np.zeros(len(uponset))
+m, b = np.polyfit(uponset, peak_above_mean, 1)
+for i in range(len(uponset)):
+     y_est[i] = m*uponset[i]
+
+plt.plot(uponset, y_est + b, color = 'r')
+
+
+
+r1, p1 = kendalltau(allrates,uponset)
 
 plt.figure()
 plt.rc('font', size = 15)
-plt.title('Peak/ mean FR v/s UP onset: HDC pooled data')
-sns.kdeplot(x = uponset, y = peak_above_mean, color = 'cornflowerblue')
-plt.scatter(uponset, peak_above_mean, label = 'R = ' + str((round(pooledcorr,2))), color = 'cornflowerblue', s = 4)
-plt.xlabel('Time from UP onset (s)')
-plt.ylabel('Peak/mean FR')
+plt.title('NREM FR v/s UP onset: HDC pooled data')
+sns.kdeplot(x = allrates, y = uponset, color = 'cornflowerblue')
+plt.scatter(allrates, uponset, label = 'R = ' + str((round(r1,2))), color = 'cornflowerblue', s = 4)
+plt.xlabel('NREM FR (Hz)')
+plt.ylabel('UP onset delay (s)')
 plt.legend(loc = 'upper right')
+plt.gca().set_box_aspect(1)
 
     
 #%% 

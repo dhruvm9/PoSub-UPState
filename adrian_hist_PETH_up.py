@@ -21,7 +21,7 @@ import seaborn as sns
 
 data_directory = '/media/DataDhruv/Dropbox (Peyrache Lab)/Peyrache Lab Team Folder/Data/AdrianPoSub/###AllPoSub'
 # datasets = np.loadtxt(os.path.join(data_directory,'dataset_test.list'), delimiter = '\n', dtype = str, comments = '#')
-datasets = np.loadtxt(os.path.join(data_directory,'dataset_Hor_DM.list'), delimiter = '\n', dtype = str, comments = '#')
+datasets = np.genfromtxt(os.path.join(data_directory,'dataset_Hor_DM.list'), delimiter = '\n', dtype = str, comments = '#')
 
 rwpath = '/media/DataDhruv/Dropbox (Peyrache Lab)/Peyrache Lab Team Folder/Projects/PoSub-UPstate/Data'
 
@@ -127,7 +127,7 @@ for s in datasets:
         spk2 = spikes[i].restrict(up_ep).as_units('ms').index.values
         tmp = crossCorr(tsd_up, spk2, binsize, nbins)
         tmp = pd.DataFrame(tmp)
-        tmp = tmp.rolling(window=4, win_type='gaussian',center=True,min_periods=1).mean(std = 2)
+        tmp = tmp.rolling(window=8, win_type='gaussian',center=True,min_periods=1).mean(std = 2)
         
         # fr = len(spk2)/ep_U.tot_length('s')
         fr = len(spk2)/up_ep.tot_length('s')
@@ -135,7 +135,7 @@ for s in datasets:
         cc[i] = tmp.values
         cc[i] = tmp.values/fr
                      
-        dd = cc[0:100]
+        dd = cc[0:150]
         # dd = cc[0:250]
                
     #Cell types 

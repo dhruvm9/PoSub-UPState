@@ -22,7 +22,7 @@ import seaborn as sns
 
 data_directory = '/media/DataDhruv/Dropbox (Peyrache Lab)/Peyrache Lab Team Folder/Data/AdrianPoSub/###AllPoSub'
 # datasets = np.loadtxt(os.path.join(data_directory,'dataset_test.list'), delimiter = '\n', dtype = str, comments = '#')
-datasets = np.loadtxt(os.path.join(data_directory,'dataset_Hor_DM.list'), delimiter = '\n', dtype = str, comments = '#')
+datasets = np.genfromtxt(os.path.join(data_directory,'dataset_Hor_DM.list'), delimiter = '\n', dtype = str, comments = '#')
 
 rwpath = '/media/DataDhruv/Dropbox (Peyrache Lab)/Peyrache Lab Team Folder/Projects/PoSub-UPstate/Data'
 
@@ -140,7 +140,7 @@ for s in datasets:
         spk2 = spikes[i].restrict(up_ep).as_units('ms').index.values
         tmp = crossCorr(tsd_dn, spk2, binsize, nbins)
         tmp = pd.DataFrame(tmp)
-        tmp = tmp.rolling(window=4, win_type='gaussian',center=True,min_periods=1).mean(std = 2)
+        tmp = tmp.rolling(window=8, win_type='gaussian',center=True,min_periods=1).mean(std = 2)
         
         # fr = len(spk2)/ep_D.tot_length('s')
         fr = len(spk2)/up_ep.tot_length('s')
@@ -204,7 +204,7 @@ for s in datasets:
         es_ex = pd.Series(index = tokeep_ex, data = ends_ex)
         
         # tmp2_ex = dd.loc[-250:-5] > 0.2
-        tmp2_ex = ee.loc[-100:-5] > 0.5
+        tmp2_ex = ee.loc[-150:-5] > 0.5
     
         tokeep2_ex = tmp2_ex.columns[tmp2_ex.sum(0) > 0]
         start_ex = np.array([tmp2_ex.index[np.where(tmp2_ex[i])[0][-1]] for i in tokeep2_ex])
@@ -356,12 +356,50 @@ regs['corr'] = allcoefs_dn
 #     # CUMULATIVE LAG v/s DEPTH PLOT (Run adrian_hist_PETH_up before running this segment)
 # ###############################################################################################   
 
+#%% 
 a = pd.DataFrame()
 a['allcoefs_up_ex'] = allcoefs_up_ex
 a['pval_up_ex'] = pvals_ex
 a['allcoefs_dn_ex'] = allcoefs_dn_ex
 a['pval_dn_ex'] = p_dn_ex
 
+DUcorr = pd.DataFrame(allcoefs_up_ex)
+UDcorr = pd.DataFrame(allcoefs_dn_ex)
+DUtype = pd.DataFrame(['DU' for x in range(len(allcoefs_up_ex))])
+UDtype = pd.DataFrame(['UD' for x in range(len(allcoefs_dn_ex))])
+b = pd.DataFrame()
+b['corr'] = pd.concat([DUcorr,UDcorr])
+b['type'] = pd.concat([DUtype,UDtype])
+
+
+#%%
+sns.set_style('white')
+palette = ['royalblue', 'lightsteelblue']
+ax = sns.violinplot( x = b['type'], y=b['corr'] , data = b, dodge=False,
+                    palette = palette,cut = 2,
+                    scale="width", inner=None)
+ax.tick_params(bottom=True, left=True)
+xlim = ax.get_xlim()
+ylim = ax.get_ylim()
+for violin in ax.collections:
+    x0, y0, width, height = violin.get_paths()[0].get_extents().bounds
+    violin.set_clip_path(plt.Rectangle((x0, y0), width / 2, height, transform=ax.transData))
+sns.boxplot(x = b['type'], y=b['corr'] , data = b, saturation=1, showfliers=False,
+            width=0.3, boxprops={'zorder': 3, 'facecolor': 'none'}, ax=ax)
+old_len_collections = len(ax.collections)
+sns.swarmplot(x = b['type'], y=b['corr'], data=b, color = 'k', dodge=False, ax=ax)
+# sns.stripplot(x = b['type'], y=b['corr'], data=b, color = 'k', dodge=False, ax=ax)
+for dots in ax.collections[old_len_collections:]:
+    dots.set_offsets(dots.get_offsets())
+ax.set_xlim(xlim)
+ax.set_ylim(ylim)
+plt.axhline(0, color = 'silver')
+plt.ylabel('Delay v/s depth (R)')
+ax.set_box_aspect(1)
+
+
+
+#%%
 plt.figure()
 plt.boxplot(allcoefs_up_ex, positions=[0], showfliers=False, patch_artist=True, boxprops=dict(facecolor='royalblue', color='royalblue'),
               capprops=dict(color='royalblue'),
@@ -387,6 +425,7 @@ plt.title('Sequential activation of Ex cells')
 plt.ylabel('Lag v/s depth (R)')
 plt.legend(loc = 'upper right')
 
+#%%
 # ############################################################################################### 
 
 

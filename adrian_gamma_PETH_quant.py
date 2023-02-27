@@ -22,7 +22,7 @@ import matplotlib.cm as cm
 import seaborn as sns
 
 data_directory = '/media/DataDhruv/Dropbox (Peyrache Lab)/Peyrache Lab Team Folder/Data/AdrianPoSub/###AllPoSub'
-datasets = np.loadtxt(os.path.join(data_directory,'dataset_Hor_DM.list'), delimiter = '\n', dtype = str, comments = '#')
+datasets = np.genfromtxt(os.path.join(data_directory,'dataset_Hor_DM.list'), delimiter = '\n', dtype = str, comments = '#')
 # datasets = np.loadtxt(os.path.join(data_directory,'dataset_test.list'), delimiter = '\n', dtype = str, comments = '#')
 rwpath = '/media/DataDhruv/Dropbox (Peyrache Lab)/Peyrache Lab Team Folder/Projects/PoSub-UPstate/Data'
 
@@ -71,10 +71,15 @@ for s in datasets:
     file = os.path.join(rawpath, name +'.DM.new_wake.evt')
     new_wake_ep  = data.read_neuroscope_intervals(name = 'new_wake', path2file = file)
     
-    peaks = pd.read_pickle(rawpath + '/' + s + '_LFP_peaks.pkl')
-    lfp_all = pd.read_pickle(rawpath + '/' + s + '_LFP_all.pkl')
+    # peaks = pd.read_pickle(rawpath + '/' + s + '_LFP_peaks.pkl')
+    # lfp_all = pd.read_pickle(rawpath + '/' + s + '_LFP_all.pkl')
     
-    highgamma_all = pd.read_pickle(rawpath + '/' + s + '_highgamma_all.pkl') 
+    peaks = pd.read_pickle(rawpath + '/' + s + '_LFP_peaks1.pkl')
+    lfp_all = pd.read_pickle(rawpath + '/' + s + '_LFP_all1.pkl')
+    
+    # highgamma_all = pd.read_pickle(rawpath + '/' + s + '_highgamma_all.pkl') 
+    highgamma_all = pd.read_pickle(rawpath + '/' + s + '_highgamma_all1.pkl') 
+    
     gamma_all = pd.read_pickle(rawpath + '/' + s + '_gamma_all.pkl') 
     
 #%%  
@@ -345,6 +350,7 @@ for s in datasets:
 #Differential of Gamma PETH
 
     w = pd.DataFrame(index = highgamma_all.index.values[0:-1], columns = highgamma_all.columns) #Drop end values
+    
     # w = pd.DataFrame(index = gamma_all.index.values[0:-1], columns = gamma_all.columns) #Drop end values
 
 
@@ -354,8 +360,8 @@ for s in datasets:
     for i in highgamma_all.columns:
         w[i] = np.diff(highgamma_all[i].values)
         w[i] = w[i].rolling(window=60,win_type='gaussian',center=True,min_periods=1).mean(std=80)
-        peakval.append(w[i].idxmax()*1e3)
-        troughs.append(w[i].idxmin()*1e3)
+        peakval.append(w[i][0:1].idxmax()*1e3)
+        troughs.append(w[i][-1:0].idxmin()*1e3)
     
     # for i in gamma_all.columns:
     #     w[i] = np.diff(gamma_all[i].values)
@@ -372,11 +378,11 @@ for s in datasets:
     diffcorr_UD.append(corr_UD)
     diffp_UD.append(p_UD) 
         
-    # plt.plot(w[-0.75:0.75][channelorder[31]], color='cornflowerblue')
+    # plt.plot(w[-0.2:0.3][channelorder[31]], color='cornflowerblue')
     # plt.axvline(peakval[31]/1e3, color = 'silver', linestyle = '--')
     # plt.axvline(troughs[31]/1e3, color = 'silver', linestyle = '--')
-    # plt.xticks([-0.8,-0.4, 0, 0.4, 0.8])
-    # plt.yticks([-0.02, 0, 0.02])
+    # plt.xticks([-0.2, 0, 0.3])
+    # plt.gca().set_box_aspect(1)
     
     mpos, bpos = np.polyfit(peakval,depth,1)
     pos_slope.append(abs(-(mpos)))
@@ -400,8 +406,19 @@ for s in datasets:
     plt.ylabel('Depth (um)')
     plt.yticks([0, -400, -800])
     plt.legend(loc = 'upper right')
+    plt.gca().set_box_aspect(1)
 
+#%%
+    # plt.figure()
+    # plt.title(s)
+    # plt.scatter(troughs, depth, label = 'R = ' + str(round(corr_UD,2)), color = 'orange')   
+    # plt.plot(troughs,yneg, label = 'speed = ' + str(round((abs(-(mneg))),2)), color = 'orange')
+    # plt.xlabel('UD Lag (ms)')
+    # plt.ylabel('Depth (um)')
+    # plt.yticks([0, -400, -800])
+    # plt.legend(loc = 'upper right')
 
+#%% 
     
     # plt.figure(figsize = (24,12))
     # plt.suptitle(s)
@@ -425,48 +442,94 @@ for s in datasets:
     # plt.ylabel('Depth (um)')
     # plt.legend(loc = 'upper right')
 
-DU_df = pd.DataFrame(data = (np.vstack([diffcorr_DU, diffp_DU])).T, columns = ['DU', 'pval'])
-UD_df = pd.DataFrame(data = (np.vstack([diffcorr_UD, diffp_UD])).T, columns = ['UD', 'pval'])
+#%%
 
-plt.figure()    
-plt.title('Differental correlations')
-plt.boxplot(DU_df['DU'], positions = [0],showfliers=False, patch_artist=True, boxprops=dict(facecolor='cornflowerblue', color='cornflowerblue'),
-            capprops=dict(color='cornflowerblue'),
-            whiskerprops=dict(color='cornflowerblue'),
-            medianprops=dict(color='white', linewidth = 2))
-plt.boxplot(UD_df['UD'], positions = [0.3],showfliers=False, patch_artist=True, boxprops=dict(facecolor='lightsteelblue', color='lightsteelblue'),
-            capprops=dict(color='lightsteelblue'),
-            whiskerprops=dict(color='lightsteelblue'),
-            medianprops=dict(color='white', linewidth = 2))
+DUcorr = pd.DataFrame(diffcorr_DU)
+UDcorr = pd.DataFrame(diffcorr_UD)
+DUtype = pd.DataFrame(['DU' for x in range(len(diffcorr_DU))])
+UDtype = pd.DataFrame(['UD' for x in range(len(diffcorr_UD))])
 
-x1 = np.random.normal(0, 0.01, size=len(DU_df['DU'][DU_df['pval'] < 0.05]))
-x2 = np.random.normal(0.3, 0.01, size=len(UD_df['UD'][UD_df['pval'] < 0.05]))
-x3 = np.random.normal(0, 0.01, size=len(DU_df['DU'][DU_df['pval'] >= 0.05]))
-x4 = np.random.normal(0.3, 0.01, size=len(UD_df['UD'][UD_df['pval'] >= 0.05]))
+b = pd.DataFrame()
+b['corr'] = pd.concat([DUcorr,UDcorr])
+b['type'] = pd.concat([DUtype,UDtype])
 
-plt.plot(x1, DU_df['DU'][DU_df['pval'] < 0.05] , 'x', color = 'k', fillstyle = 'none', markersize = 6, zorder =3, label = 'p < 0.05')
-plt.plot(x2, UD_df['UD'][UD_df['pval'] < 0.05] , 'x', color = 'k', fillstyle = 'none', markersize = 6, zorder =3)
-plt.plot(x3, DU_df['DU'][DU_df['pval'] > 0.05] , '.', color = 'k', fillstyle = 'none', markersize = 6, zorder =3, label = 'p >= 0.05')
-plt.plot(x4, UD_df['UD'][UD_df['pval'] > 0.05] , '.', color = 'k', fillstyle = 'none', markersize = 6, zorder =3)
-plt.xticks([0, 0.3],['DU', 'UD'])
+#%% 
+
+plt.figure()
+sns.set_style('white')
+palette = ['royalblue', 'lightsteelblue']
+ax = sns.violinplot( x = b['type'], y=b['corr'] , data = b, dodge=False,
+                    palette = palette,cut = 2,
+                    scale="width", inner=None)
+ax.tick_params(bottom=True, left=True)
+xlim = ax.get_xlim()
+ylim = ax.get_ylim()
+for violin in ax.collections:
+    x0, y0, width, height = violin.get_paths()[0].get_extents().bounds
+    violin.set_clip_path(plt.Rectangle((x0, y0), width / 2, height, transform=ax.transData))
+sns.boxplot(x = b['type'], y=b['corr'] , data = b, saturation=1, showfliers=False,
+            width=0.3, boxprops={'zorder': 3, 'facecolor': 'none'}, ax=ax)
+old_len_collections = len(ax.collections)
+sns.swarmplot(x = b['type'], y=b['corr'], data=b, color = 'k', dodge=False, ax=ax)
+# sns.stripplot(x = b['type'], y=b['corr'], data=b, color = 'k', dodge=False, ax=ax)
+for dots in ax.collections[old_len_collections:]:
+    dots.set_offsets(dots.get_offsets())
+ax.set_xlim(xlim)
+ax.set_ylim(ylim)
 plt.axhline(0, color = 'silver')
-plt.ylabel('Lag v/s depth (R)')   
-plt.legend(loc = 'upper right')
+plt.ylabel('Delay v/s depth (R)')
+ax.set_box_aspect(1)
 
-posdf = pd.DataFrame(data = (np.vstack([pos_slope, diffp_DU])).T, columns = ['speed', 'pval'])
-negdf = pd.DataFrame(data = (np.vstack([neg_slope, diffp_UD])).T, columns = ['speed', 'pval'])
 
-plt.figure()    
-plt.title('DU Speed')
-plt.boxplot(posdf['speed'][posdf['pval'] < 0.05], positions = [0], showfliers=False, patch_artist=True, boxprops=dict(facecolor='darkslategray', color='darkslategray'),
-            capprops=dict(color='darkslategray'),
-            whiskerprops=dict(color='darkslategray'),
-            medianprops=dict(color='white', linewidth = 2))
+z_du, p_du = wilcoxon(np.array(DUcorr)-0)
+z_ud, p_ud = wilcoxon(np.array(UDcorr)-0)
+t, p = mannwhitneyu(DUcorr, UDcorr)
 
-x1 = np.random.normal(0, 0.01, size=len(posdf['speed'][posdf['pval'] < 0.05]))
-plt.plot(x1, posdf['speed'][posdf['pval'] < 0.05], '.', color = 'k', fillstyle = 'none', markersize = 8, zorder =3)
-plt.xticks([])
-plt.ylabel('Velocity (mm/s)')   
+#%%
+
+# DU_df = pd.DataFrame(data = (np.vstack([diffcorr_DU, diffp_DU])).T, columns = ['DU', 'pval'])
+# UD_df = pd.DataFrame(data = (np.vstack([diffcorr_UD, diffp_UD])).T, columns = ['UD', 'pval'])
+
+
+# plt.figure()    
+# plt.title('Differental correlations')
+# plt.boxplot(DU_df['DU'], positions = [0],showfliers=False, patch_artist=True, boxprops=dict(facecolor='cornflowerblue', color='cornflowerblue'),
+#             capprops=dict(color='cornflowerblue'),
+#             whiskerprops=dict(color='cornflowerblue'),
+#             medianprops=dict(color='white', linewidth = 2))
+# plt.boxplot(UD_df['UD'], positions = [0.3],showfliers=False, patch_artist=True, boxprops=dict(facecolor='lightsteelblue', color='lightsteelblue'),
+#             capprops=dict(color='lightsteelblue'),
+#             whiskerprops=dict(color='lightsteelblue'),
+#             medianprops=dict(color='white', linewidth = 2))
+
+# x1 = np.random.normal(0, 0.01, size=len(DU_df['DU'][DU_df['pval'] < 0.05]))
+# x2 = np.random.normal(0.3, 0.01, size=len(UD_df['UD'][UD_df['pval'] < 0.05]))
+# x3 = np.random.normal(0, 0.01, size=len(DU_df['DU'][DU_df['pval'] >= 0.05]))
+# x4 = np.random.normal(0.3, 0.01, size=len(UD_df['UD'][UD_df['pval'] >= 0.05]))
+
+# plt.plot(x1, DU_df['DU'][DU_df['pval'] < 0.05] , 'x', color = 'k', fillstyle = 'none', markersize = 6, zorder =3, label = 'p < 0.05')
+# plt.plot(x2, UD_df['UD'][UD_df['pval'] < 0.05] , 'x', color = 'k', fillstyle = 'none', markersize = 6, zorder =3)
+# plt.plot(x3, DU_df['DU'][DU_df['pval'] > 0.05] , '.', color = 'k', fillstyle = 'none', markersize = 6, zorder =3, label = 'p >= 0.05')
+# plt.plot(x4, UD_df['UD'][UD_df['pval'] > 0.05] , '.', color = 'k', fillstyle = 'none', markersize = 6, zorder =3)
+# plt.xticks([0, 0.3],['DU', 'UD'])
+# plt.axhline(0, color = 'silver')
+# plt.ylabel('Lag v/s depth (R)')   
+# plt.legend(loc = 'upper right')
+
+# posdf = pd.DataFrame(data = (np.vstack([pos_slope, diffp_DU])).T, columns = ['speed', 'pval'])
+# negdf = pd.DataFrame(data = (np.vstack([neg_slope, diffp_UD])).T, columns = ['speed', 'pval'])
+
+# plt.figure()    
+# plt.title('DU Speed')
+# plt.boxplot(posdf['speed'][posdf['pval'] < 0.05], positions = [0], showfliers=False, patch_artist=True, boxprops=dict(facecolor='darkslategray', color='darkslategray'),
+#             capprops=dict(color='darkslategray'),
+#             whiskerprops=dict(color='darkslategray'),
+#             medianprops=dict(color='white', linewidth = 2))
+
+# x1 = np.random.normal(0, 0.01, size=len(posdf['speed'][posdf['pval'] < 0.05]))
+# plt.plot(x1, posdf['speed'][posdf['pval'] < 0.05], '.', color = 'k', fillstyle = 'none', markersize = 8, zorder =3)
+# plt.xticks([])
+# plt.ylabel('Velocity (mm/s)')   
 
 
 #%% 
@@ -509,7 +572,8 @@ plt.plot(x2, unit_speed, '.', color = 'k', fillstyle = 'none', markersize = 8, z
 plt.xticks([0, 0.3],['Spikes', 'LFP'])
 plt.ylabel('Velocity (mm/s)')  
 
- 
+t,p = mannwhitneyu(unit_speed,posdf['speed'][posdf['pval'] < 0.05])
+
     
 #%%
 #Units vs LFP

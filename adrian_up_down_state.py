@@ -10,7 +10,6 @@ import pandas as pd
 import scipy.io
 from functions import *
 from wrappers import *
-import ipyparallel
 import os, sys
 import neuroseries as nts 
 import time 
@@ -20,7 +19,7 @@ import seaborn as sns
 from scipy.stats import wilcoxon
 
 data_directory = '/media/DataDhruv/Dropbox (Peyrache Lab)/Peyrache Lab Team Folder/Data/AdrianPoSub/###AllPoSub'
-datasets = np.loadtxt(os.path.join(data_directory,'dataset_Hor_DM.list'), delimiter = '\n', dtype = str, comments = '#')
+datasets = np.genfromtxt(os.path.join(data_directory,'dataset_Hor_DM.list'), delimiter = '\n', dtype = str, comments = '#')
 #datasets = np.loadtxt(os.path.join(data_directory,'dataset_test.list'), delimiter = '\n', dtype = str, comments = '#')
 rwpath = '/media/DataDhruv/Dropbox (Peyrache Lab)/Peyrache Lab Team Folder/Projects/PoSub-UPstate/Data'
 
@@ -402,3 +401,12 @@ for i in range(len(x1)):     plt.plot([x1[i],x2[i]], [durations['Sleep'][i],dura
 plt.title('Down state detection quality')
 plt.ylabel('Fraction of epoch')
 plt.show()
+
+
+#%%
+
+#
+# fig, ax = plt.subplots()
+# [plt.plot(spikes[n].restrict(new_sws_ep).as_units('us').fillna(n), '|', color = 'k') for n in spikes.keys()]
+# plt.plot((total2/max(total2))*100) 
+# plt.axhline(np.percentile((total2/max(total2)*100),20), color = 'r')

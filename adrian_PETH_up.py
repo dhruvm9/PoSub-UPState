@@ -27,13 +27,13 @@ from scipy.stats import kendalltau, pearsonr, wilcoxon
 
 data_directory = '/media/DataDhruv/Dropbox (Peyrache Lab)/Peyrache Lab Team Folder/Data/AdrianPoSub/###AllPoSub'
 #datasets = np.loadtxt(os.path.join(data_directory,'dataset_test.list'), delimiter = '\n', dtype = str, comments = '#')
-datasets = np.loadtxt(os.path.join(data_directory,'dataset_Hor_DM.list'), delimiter = '\n', dtype = str, comments = '#')
+datasets = np.genfromtxt(os.path.join(data_directory,'dataset_Hor_DM.list'), delimiter = '\n', dtype = str, comments = '#')
 
 rwpath = '/media/DataDhruv/Dropbox (Peyrache Lab)/Peyrache Lab Team Folder/Projects/PoSub-UPstate/Data'
 
 allcoefs_up = []
 allcoefs_dn = []
-alldurs = []
+downdurs = []
 updurs = []
 
 for s in datasets:
@@ -133,7 +133,7 @@ for s in datasets:
         tmp = crossCorr(tsd_up, spk2, binsize, nbins)
        
         tmp = pd.DataFrame(tmp)
-        tmp = tmp.rolling(window=4, win_type='gaussian',center=True,min_periods=1).mean(std = 2)
+        tmp = tmp.rolling(window=8, win_type='gaussian',center=True,min_periods=1).mean(std = 2)
         # fr = len(spk2)/ep_U.tot_length('s')
         fr = len(spk2)/up_ep.tot_length('s')
         rates.append(fr)
@@ -141,7 +141,8 @@ for s in datasets:
         cc[i] = tmp.values
         cc[i] = tmp.values/fr
      
-        dd = cc[-50:250]
+        # dd = cc[-50:250]
+        dd = cc[-50:150]
     
     #Cell types 
     # ee = dd[pyr]
@@ -170,19 +171,38 @@ for s in datasets:
         
         fig, ax = plt.subplots()
         #cax = ax.imshow(finalRates.T,extent=[-250 , 150, len(interneuron) , 1],aspect = 'auto', cmap = 'hot')
-        cax = ax.imshow(finalRates.T,extent=[-50 , 250, len(neurons) , 1],aspect = 'auto', cmap = 'inferno')
+        # cax = ax.imshow(finalRates.T,extent=[-50 , 250, len(neurons) , 1],aspect = 'auto', cmap = 'inferno')
+        cax = ax.imshow(finalRates.T,extent=[-50 , 150, len(neurons) , 1],aspect = 'auto', cmap = 'inferno')
         # plt.imshow(finalRates.T,extent=[-250 , 250, len(neurons) , 1],aspect = 'auto', cmap = 'hot')        
         # plt.imshow(finalRates.T,extent=[-250 , 250, len(pyr) , 1],aspect = 'auto', cmap = 'hot')        
+        # cbar = fig.colorbar(cax, ticks=[0, finalRates.values.max()], label = 'Norm. Firing Rate')
+        # cbar.ax.set_yticklabels(['0', str(round(finalRates.values.max(),2))])
+        
         cbar = fig.colorbar(cax, ticks=[0, finalRates.values.max()], label = 'Norm. Firing Rate')
-        cbar.ax.set_yticklabels(['0', str(round(finalRates.values.max(),2))])
+        cbar.ax.set_yticklabels(['0', '>=2'])
+                
         plt.title('Event-related Xcorr, aligned to UP state onset_' + s)
         ax.set_ylabel('Neuron number')
         ax.set_xlabel('Lag (ms)')
+        ax.set_box_aspect(1)
+
         
         
-        dur = (down_ep['end'] - down_ep['start']) / 1000
-        updur = (up_ep['end'] - up_ep['start']) / 1000
+        downdur = (down_ep['end'] - down_ep['start']) / 1e6
+        updur = (up_ep['end'] - up_ep['start']) / 1e6
         updurs.append(updur)
-        alldurs.append(dur)
+        downdurs.append(downdur)
+        
+        bins = np.arange(-2,1,0.1)
+        # plt.figure()
+        # plt.title(s)
+        # plt.hist(np.log10(updur.values),bins)
+        # plt.hist(np.log10(downdur.values),bins)
+        
     # sys.exit()   
-alldurs = np.concatenate(alldurs)
+
+
+#%%
+
+    
+    

@@ -18,6 +18,7 @@ import matplotlib.pyplot as plt
 from Wavelets import MyMorlet as Morlet
 from scipy.stats import pearsonr 
 from scipy.stats import wilcoxon, mannwhitneyu
+import seaborn as sns
 
 data_directory = '/media/DataDhruv/Dropbox (Peyrache Lab)/Peyrache Lab Team Folder/Data/AdrianPoSub/###AllPoSub'
 # datasets = np.loadtxt(os.path.join(data_directory,'dataset_test.list'), delimiter = '\n', dtype = str, comments = '#')
@@ -147,14 +148,14 @@ for s in datasets:
         dd = cc[-250:250]
         
     if len(dd.columns) > 0:
-        tmp = dd.loc[5:] >  np.percentile(dd.values,20) #0.2
+        tmp = dd.loc[5:] >  0.2 #np.percentile(dd.values,20) 
         
         
         tokeep = tmp.columns[tmp.sum(0) > 0]
         ends = np.array([tmp.index[np.where(tmp[j])[0][0]] for j in tokeep])
         es = pd.Series(index = tokeep, data = ends)
         
-        tmp2 = dd.loc[-100:-5] > np.percentile(dd.values,20)  #0.2
+        tmp2 = dd.loc[-100:-5] > 0.2 #np.percentile(dd.values,20)  
 
         tokeep2 = tmp2.columns[tmp2.sum(0) > 0]
         start = np.array([tmp2.index[np.where(tmp2[k])[0][-1]] for k in tokeep2])
@@ -192,38 +193,52 @@ for i in range(len(diff)):
 
 t,p = wilcoxon(dur_D,dur_V)
 
-label = ['Dorsal', 'Ventral']
-x1 = np.random.normal(0, 0.01, size=len(dur_D))
-x2 = np.random.normal(0.3, 0.01, size=len(dur_D))
-x = np.vstack([x1, x2])# the label locations
-width = 0.3  # the width of the bars
-
-plt.figure()
-plt.boxplot(dur_D, positions=[0], showfliers=False, patch_artist=True, boxprops=dict(facecolor='mediumorchid', color='mediumorchid'),
-            capprops=dict(color='mediumorchid'),
-            whiskerprops=dict(color='mediumorchid'),
-            medianprops=dict(color='white', linewidth = 2))
-plt.boxplot(dur_V, positions=[0.3], showfliers=False, patch_artist=True, boxprops=dict(facecolor='violet', color='violet'),
-            capprops=dict(color='violet'),
-            whiskerprops=dict(color='violet'),
-            medianprops=dict(color='white', linewidth = 2))
-
-plt.xticks([0, 0.3],['Dorsal', 'Ventral'])
-plt.title('Mean session DOWN-state duration')
-plt.ylabel('DOWN duration (ms)')
-pval = np.vstack([(dur_D), (dur_V)])
-plt.plot(x, np.vstack(pval), 'o-', color = 'k', zorder = 3, markersize = 3, linewidth = 1 )
+#%%
 
 
-means_D = np.nanmean(dur_D)
-means_V = np.nanmean(dur_V)
+plt.scatter(dur_D, dur_V, color = 'k', zorder = 3) 
+plt.gca().axline((min(min(dur_D),min(dur_V)),min(min(dur_D),min(dur_V)) ), slope=1, color = 'silver', linestyle = '--')
+plt.xlabel('Dorsal DOWN duration (ms)')
+plt.ylabel('Ventral DOWN duration (ms)')
+plt.axis('square')
 
-label = ['dorsal', 'ventral']
-x = [0, 0.35]# the label locations
-width = 0.35  # the width of the bars
 
 
-fig, ax = plt.subplots()
-rects1 = ax.bar(x[0], means_D, width, color = 'royalblue')
-rects1 = ax.bar(x[1], means_V, width, color = 'lightsteelblue')
-plt.plot(x, np.vstack(pval), 'o-', color = 'k', zorder = 3, markersize = 3, linewidth = 1 )
+#%%
+
+# label = ['Dorsal', 'Ventral']
+# # x1 = np.random.normal(0, 0.01, size=len(dur_D))
+# # x2 = np.random.normal(0.3, 0.01, size=len(dur_D))
+# # x = np.vstack([x1, x2])# the label locations
+# x = [0, 0.35]# the label locations
+# width = 0.3  # the width of the bars
+
+# plt.figure()
+# plt.boxplot(dur_D, positions=[0], showfliers=False, patch_artist=True, boxprops=dict(facecolor='mediumorchid', color='mediumorchid'),
+#             capprops=dict(color='mediumorchid'),
+#             whiskerprops=dict(color='mediumorchid'),
+#             medianprops=dict(color='white', linewidth = 2))
+# plt.boxplot(dur_V, positions=[0.3], showfliers=False, patch_artist=True, boxprops=dict(facecolor='violet', color='violet'),
+#             capprops=dict(color='violet'),
+#             whiskerprops=dict(color='violet'),
+#             medianprops=dict(color='white', linewidth = 2))
+
+# plt.xticks([0, 0.3],['Dorsal', 'Ventral'])
+# plt.title('Mean session DOWN-state duration')
+# plt.ylabel('DOWN duration (ms)')
+# pval = np.vstack([(dur_D), (dur_V)])
+# plt.plot(x, np.vstack(pval), 'o-', color = 'k', zorder = 3, markersize = 3, linewidth = 1 )
+
+
+# means_D = np.nanmean(dur_D)
+# means_V = np.nanmean(dur_V)
+
+# label = ['dorsal', 'ventral']
+# x = [0, 0.35]# the label locations
+# width = 0.35  # the width of the bars
+
+
+# fig, ax = plt.subplots()
+# rects1 = ax.bar(x[0], means_D, width, color = 'royalblue')
+# rects1 = ax.bar(x[1], means_V, width, color = 'lightsteelblue')
+# plt.plot(x, np.vstack(pval), 'o-', color = 'k', zorder = 3, markersize = 3, linewidth = 1 )

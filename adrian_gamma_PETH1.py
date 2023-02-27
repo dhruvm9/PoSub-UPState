@@ -24,7 +24,7 @@ import matplotlib.cm as cm
 
 data_directory = '/media/DataDhruv/Dropbox (Peyrache Lab)/Peyrache Lab Team Folder/Data/AdrianPoSub/###AllPoSub'
 # datasets = np.loadtxt(os.path.join(data_directory,'dataset_Hor_DM.list'), delimiter = '\n', dtype = str, comments = '#')
-datasets = np.loadtxt(os.path.join(data_directory,'dataset_test.list'), delimiter = '\n', dtype = str, comments = '#')
+datasets = np.genfromtxt(os.path.join(data_directory,'dataset_test.list'), delimiter = '\n', dtype = str, comments = '#')
 rwpath = '/media/DataDhruv/Dropbox (Peyrache Lab)/Peyrache Lab Team Folder/Projects/PoSub-UPstate/Data'
 #%%
 def perievent_Tsd(data, tref,  minmax):
@@ -72,8 +72,11 @@ for s in datasets:
     file = os.path.join(rawpath, name +'.DM.new_wake.evt')
     new_wake_ep  = data.read_neuroscope_intervals(name = 'new_wake', path2file = file)
     
-    peaks = pd.read_pickle(rawpath + '/' + s + '_LFP_peaks.pkl')
-    lfp_all = pd.read_pickle(rawpath + '/' + s + '_LFP_all.pkl')
+    # peaks = pd.read_pickle(rawpath + '/' + s + '_LFP_peaks.pkl')
+    # lfp_all = pd.read_pickle(rawpath + '/' + s + '_LFP_all.pkl')
+    
+    peaks = pd.read_pickle(rawpath + '/' + s + '_LFP_peaks1.pkl')
+    lfp_all = pd.read_pickle(rawpath + '/' + s + '_LFP_all1.pkl')
     
     filepath = os.path.join(rwpath, name)
     listdir    = os.listdir(filepath)
@@ -145,11 +148,12 @@ for s in datasets:
     
     # gamma_all.to_pickle(rawpath + '/' + s + '_gamma_all.pkl')
     # gamma_all.to_pickle(rawpath + '/' + s + '_highgamma_all.pkl')
+    gamma_all.to_pickle(rawpath + '/' + s + '_highgamma_all1.pkl')
     
 # np.save(rwpath + '/' + 'mediancorr_gamma_3.npy', np.array(mediancorr))
 # np.save(rwpath + '/' + 'medianp_gamma_3.npy', np.array(medianp))
       
-    bounds = [-0.75,0.75]
+    bounds = [-0.2,0.3]
     fig, ax = plt.subplots()
     cax = ax.imshow(gamma_all[bounds[0]:bounds[1]].T,extent=[bounds[0] , bounds[1], data.nChannels , 1],aspect = 'auto', cmap = 'inferno')
     cbar = fig.colorbar(cax, ticks=[gamma_all[bounds[0]:bounds[1]].values.min(), gamma_all[bounds[0]:bounds[1]].values.max()], label = 'Gamma power')
@@ -160,21 +164,24 @@ for s in datasets:
     plt.plot(lfp_all[bounds[0]:bounds[1]][seq[1]].index.values, 
               (-0.003* lfp_all[bounds[0]:bounds[1]][seq[1]].values)+10, color = 'white')
     plt.plot(lfp_all[bounds[0]:bounds[1]][seq[3]].index.values, 
-              (-0.003* lfp_all[bounds[0]:bounds[1]][seq[3]].values)+25, color = 'gainsboro')
-    plt.plot(lfp_all[bounds[0]:bounds[1]][seq[5]].index.values, (-0.003* lfp_all[bounds[0]:bounds[1]][seq[5]].values)+40, color = 'silver')
-    plt.plot(lfp_all[bounds[0]:bounds[1]][seq[7]].index.values, (-0.003* lfp_all[bounds[0]:bounds[1]][seq[7]].values)+55, color = 'grey')
+              (-0.003* lfp_all[bounds[0]:bounds[1]][seq[3]].values)+25, color = 'white') #'gainsboro')
+    plt.plot(lfp_all[bounds[0]:bounds[1]][seq[5]].index.values, (-0.003* lfp_all[bounds[0]:bounds[1]][seq[5]].values)+40, color = 'white') #'silver')
+    plt.plot(lfp_all[bounds[0]:bounds[1]][seq[7]].index.values, (-0.003* lfp_all[bounds[0]:bounds[1]][seq[7]].values)+55, color = 'white') #'grey')
     plt.axvline(0, color = 'white', linestyle = '--')
+    ax.set_box_aspect(1)
    
     
     w = pd.DataFrame(index = gamma_all.index.values[0:-1], columns = seq) #Drop end values
     peakval = []
     troughs = []
         
+  #%% Quantification example plot 
+    
     for i in seq:
         w[i] = np.diff(gamma_all[i].values)
         w[i] = w[i].rolling(window=60,win_type='gaussian',center=True,min_periods=1).mean(std=80)
-        peakval.append(w[i].idxmax())
-        troughs.append(w[i].idxmin())
+        peakval.append(w[0:1][i].idxmax())
+        troughs.append(w[-1:0][i].idxmin())
               
     plt.figure()
     plt.xlabel('lag (s)')
@@ -182,7 +189,7 @@ for s in datasets:
     plt.title('Gamma PETH_' + s)
     j = 0
     for i in seq:
-        plt.plot(gamma_all[-0.3:0.3][i], color=cm.gist_heat(j/8), label = j)
+        plt.plot(gamma_all[-0.2:0.3][i], color=cm.gist_heat(j/8), label = j)
         plt.plot(peakval[j], gamma_all[i].loc[peakval[j]], 'o', color = 'r', markersize =4)
         plt.ylim(55,None)
         plt.axvline(0, color = 'k', linestyle = '--')
@@ -190,6 +197,9 @@ for s in datasets:
         j+=1
     plt.vlines(peakval[0],55, gamma_all[seq[0]].loc[peakval[0]], color = 'r', linestyle = 'dashed')
     plt.vlines(peakval[-1],55, gamma_all[seq[-1]].loc[peakval[-1]], color = 'r', linestyle = 'dashed')
+    plt.gca().set_box_aspect(1)
+    
+    #%%
 # ############################################################################################### 
 #     #SINGLE TRIAL GAMMA POWER 
 # ############################################################################################### 
@@ -210,7 +220,8 @@ for s in datasets:
     #         file = name + '.lfp'
     #         lfpsig = nap.load_eeg(filepath + '/' + name + '.lfp' , channel = j , n_channels = data.nChannels, frequency = 1250, precision ='int16', bytes_size = 2) 
      
-    #     lfpsig = downsample(lfpsig, 1, 2)
+    #     downsample = 2
+    #     lfpsig = lfpsig[::downsample]
     #     lfpchan[j] = lfpsig 
 
         
@@ -235,8 +246,9 @@ for s in datasets:
     # cax = ax.imshow(gpdf.T,extent=[period['start'][0] , period['end'][0], data.nChannels , 1],aspect = 'auto', cmap = 'inferno')
     # cbar = fig.colorbar(cax, ticks=[gpdf.values.min(), gpdf.values.max()], label = 'Gamma power',)
     # plt.plot(lfpchan[seq[1]].restrict(period).index.values, (-0.0025* lfpchan[seq[1]].restrict(period).values)+10, color = 'white')
-    # plt.plot(lfpchan[seq[3]].restrict(period).index.values, (-0.0025* lfpchan[seq[3]].restrict(period).values)+25, color = 'gainsboro')
-    # plt.plot(lfpchan[seq[5]].restrict(period).index.values, (-0.0025* lfpchan[seq[5]].restrict(period).values)+40, color = 'silver')
-    # plt.plot(lfpchan[seq[7]].restrict(period).index.values, (-0.0025* lfpchan[seq[7]].restrict(period).values)+55, color = 'grey')
+    # plt.plot(lfpchan[seq[3]].restrict(period).index.values, (-0.0025* lfpchan[seq[3]].restrict(period).values)+25, color = 'white') #'gainsboro')
+    # plt.plot(lfpchan[seq[5]].restrict(period).index.values, (-0.0025* lfpchan[seq[5]].restrict(period).values)+40, color = 'white') #'silver')
+    # plt.plot(lfpchan[seq[7]].restrict(period).index.values, (-0.0025* lfpchan[seq[7]].restrict(period).values)+55, color = 'white') #'grey')
     # plt.yticks([1,64])
     # plt.axvline(1063.816, color = 'white', linestyle = '--')
+    # ax.set_box_aspect(1)

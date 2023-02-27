@@ -114,20 +114,19 @@ for s in datasets:
     else: 
         lfp = nap.load_eeg(filepath + '/' + name + '.lfp' , channel = seq[int(len(seq)/2)] , n_channels = data.nChannels, frequency = 1250, precision ='int16', bytes_size = 2) 
     
-    lfp = downsample(lfp, 1, 5)
+    downsample =  5
+    lfp = lfp[::downsample]
     lfp_filt_delta = nap.Tsd(lfp.index.values, butter_bandpass_filter(lfp, 0.5, 4, 1250/5, 2))
         
-    power_delta = nap.Tsd(lfp_filt_delta.index.values, np.abs(lfp_filt_delta.values))
-    power_delta = power_delta.as_series()
-    power_delta = power_delta.rolling(window=1000,win_type='gaussian',center=True,min_periods=1).mean(std=80)    
     
-    a,_ = scipy.signal.find_peaks(lfp_filt_delta.restrict(new_sws_ep).values, 2.5*np.std(lfp_filt_delta.restrict(new_sws_ep).values))
+    # a,_ = scipy.signal.find_peaks(lfp_filt_delta.restrict(new_sws_ep).values, 2.5*np.std(lfp_filt_delta.restrict(new_sws_ep).values))
+    a,_ = scipy.signal.find_peaks(lfp_filt_delta.restrict(new_sws_ep).values, 3*np.std(lfp_filt_delta.restrict(new_sws_ep).values))
         
     # plt.figure()
     # plt.title('LFP trace')
     # plt.plot(lfp.restrict(new_sws_ep))
     # plt.plot(lfp_filt_delta.restrict(new_sws_ep), color = 'k')
-    # plt.axhline(2.5*np.std(lfp_filt_delta.restrict(new_sws_ep).values))
+    # plt.axhline(3*np.std(lfp_filt_delta.restrict(new_sws_ep).values))
     # plt.plot(lfp_filt_delta.restrict(new_sws_ep).index.values[a],lfp_filt_delta.restrict(new_sws_ep).values[a],'o')
     
     #Example is at 1063.8s (A3707)
@@ -139,7 +138,8 @@ for s in datasets:
     peaks = nap.Tsd(sleep_lfp.index.values[a])
     peth0 = nap.compute_perievent(sleep_lfp, peaks, minmax = (-1, 1), time_unit = 's')
     
-    peaks.to_pickle(rawpath + '/' + s + '_LFP_peaks.pkl')
+    # peaks.to_pickle(rawpath + '/' + s + '_LFP_peaks.pkl')
+    peaks.to_pickle(rawpath + '/' + s + '_LFP_peaks1.pkl')
     
     lfpmag = pd.DataFrame(index = peth0[0].index.values)
    
@@ -165,7 +165,7 @@ for s in datasets:
             lfpsig = nap.load_eeg(filepath + '/' + name + '.lfp' , channel = j, n_channels = data.nChannels, frequency = 1250, precision ='int16', bytes_size = 2) 
                   
         
-        lfpsig = downsample(lfpsig, 1, 5)
+        lfpsig = lfpsig[::downsample]
                         
         spatialPETH = nap.compute_perievent(lfpsig, peaks, minmax = (-1, 1), time_unit = 's')
         tmp = []
@@ -183,7 +183,8 @@ for s in datasets:
     for i in channelorder:
         lfp_all = pd.concat([lfp_all, lfpsigs[i]], axis = 1)
         
-    lfp_all.to_pickle(rawpath + '/' + s + '_LFP_all.pkl') 
+    # lfp_all.to_pickle(rawpath + '/' + s + '_LFP_all.pkl') 
+    lfp_all.to_pickle(rawpath + '/' + s + '_LFP_all1.pkl') 
             
     fig, ax = plt.subplots()
     cax = ax.imshow(lfp_all[-0.75:0.75].T,extent=[-0.75 , 0.75, data.nChannels , 1],aspect = 'auto', cmap = 'inferno')

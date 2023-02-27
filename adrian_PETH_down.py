@@ -27,7 +27,7 @@ from scipy.stats import kendalltau, pearsonr, wilcoxon
 
 data_directory = '/media/DataDhruv/Dropbox (Peyrache Lab)/Peyrache Lab Team Folder/Data/AdrianPoSub/###AllPoSub'
 #datasets = np.loadtxt(os.path.join(data_directory,'dataset_test.list'), delimiter = '\n', dtype = str, comments = '#')
-datasets = np.loadtxt(os.path.join(data_directory,'dataset_Hor_DM.list'), delimiter = '\n', dtype = str, comments = '#')
+datasets = np.genfromtxt(os.path.join(data_directory,'dataset_Hor_DM.list'), delimiter = '\n', dtype = str, comments = '#')
 
 rwpath = '/media/DataDhruv/Dropbox (Peyrache Lab)/Peyrache Lab Team Folder/Projects/PoSub-UPstate/Data'
 
@@ -128,7 +128,7 @@ for s in datasets:
         spk2 = spikes[i].restrict(up_ep).as_units('ms').index.values
         tmp = crossCorr(tsd_dn, spk2, binsize, nbins)
         tmp = pd.DataFrame(tmp)
-        tmp = tmp.rolling(window=4, win_type='gaussian',center=True,min_periods=1).mean(std = 2)
+        tmp = tmp.rolling(window=8, win_type='gaussian',center=True,min_periods=1).mean(std = 2)
         
         
         # fr = len(spk2)/ep_D.tot_length('s')
@@ -137,7 +137,8 @@ for s in datasets:
         cc[i] = tmp.values
         cc[i] = tmp.values/fr
 
-    dd = cc[-250:50]
+    # dd = cc[-250:50]
+    dd = cc[-150:50]
     
     #Cell types 
     # ee = dd[pyr]
@@ -165,11 +166,13 @@ for s in datasets:
         
         fig, ax = plt.subplots()
         #cax = ax.imshow(finalRates.T,extent=[-250 , 150, len(interneuron) , 1],aspect = 'auto', cmap = 'hot')
-        cax = ax.imshow(finalRates.T,extent=[-250 , 50, len(neurons) , 1],aspect = 'auto', cmap = 'inferno', vmin = 0, vmax = 3.54)
+        # cax = ax.imshow(finalRates.T,extent=[-250 , 50, len(neurons) , 1],aspect = 'auto', cmap = 'inferno', vmin = 0, vmax = 3.54)
+        cax = ax.imshow(finalRates.T,extent=[-150 , 50, len(neurons) , 1],aspect = 'auto', cmap = 'inferno')
         # plt.imshow(finalRates.T,extent=[-250 , 250, len(neurons) , 1],aspect = 'auto', cmap = 'hot')        
         # plt.imshow(finalRates.T,extent=[-250 , 250, len(pyr) , 1],aspect = 'auto', cmap = 'hot')        
         cbar = fig.colorbar(cax, ticks=[0, finalRates.values.max()], label = 'Norm. Firing Rate')
-        cbar.ax.set_yticklabels(['0', str(round(finalRates.values.max(),2))])
+        # cbar.ax.set_yticklabels(['0', str(round(finalRates.values.max(),2))])
+        cbar.ax.set_yticklabels(['0', '>=2'])
         plt.title('Event-related Xcorr, aligned to DOWN state onset_' + s)
         ax.set_ylabel('Neuron number')
         ax.set_xlabel('Lag (ms)')

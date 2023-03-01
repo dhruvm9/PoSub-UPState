@@ -20,8 +20,9 @@ from scipy.fft import fft, ifft
 from scipy.stats import wilcoxon, pearsonr
 from scipy.signal import hilbert, fftconvolve
 import matplotlib.cm as cm
-import pywt
+import matplotlib.colors as colors
 import math 
+import pickle
 
 #%% 
 
@@ -62,28 +63,15 @@ def MorletWavelet(f, ncyc, si):
 #     convolution_result_fft = convolution_result_fft[int(half_of_kernel_size)+1:len(convolution_result_fft)-int(half_of_kernel_size)]
 #     return convolution_result_fft
 
-#%%
-
-def perievent_Tsd(data, tref,  minmax):
-    peth = {}
-    
-    a = data.index[data.index.get_indexer(tref.index.values, method='nearest')]
-    
-    tmp = nap.compute_perievent(data, nap.Ts(a.values) , minmax = minmax, time_unit = 's')
-    peth_all = []
-    for j in range(len(tmp)):
-        #if len(tmp[j]) >= 400: #TODO: Fix this - don't hard code
-        peth_all.append(tmp[j].as_series())
-    peth['all'] = pd.concat(peth_all, axis = 1, join = 'outer')
-    peth['mean'] = peth['all'].mean(axis = 1)
-    return peth
 
 #%%
    
-data_directory = '/media/DataDhruv/Dropbox (Peyrache Lab)/Peyrache Lab Team Folder/Data/AdrianPoSub/###AllPoSub'
-# datasets = np.loadtxt(os.path.join(data_directory,'dataset_Hor_DM.list'), delimiter = '\n', dtype = str, comments = '#')
-datasets = np.genfromtxt(os.path.join(data_directory,'dataset_test.list'), delimiter = '\n', dtype = str, comments = '#')
-rwpath = '/media/DataDhruv/Dropbox (Peyrache Lab)/Peyrache Lab Team Folder/Projects/PoSub-UPstate/Data'
+data_directory = '/media/adrien/LaCie/PoSub-UPState/Data/###AllPoSub'
+rwpath = '/media/adrien/LaCie/PoSub-UPState/Project/Data'
+datasets = np.genfromtxt(os.path.join(data_directory,'dataset_Hor_DM.list'), delimiter = '\n', dtype = str, comments = '#')
+
+all_pspec_z = pd.DataFrame()
+all_pspec_median = pd.DataFrame()
 
 for s in datasets:
     print(s)
@@ -112,8 +100,8 @@ for s in datasets:
     file = os.path.join(rawpath, name +'.evt.py.upp')
     up_ep = data.read_neuroscope_intervals(name = 'UP', path2file = file)
     
-    peaks = pd.read_pickle(rawpath + '/' + s + '_LFP_peaks1.pkl')
-    lfp_all = pd.read_pickle(rawpath + '/' + s + '_LFP_all1.pkl')
+    # peaks = pd.read_pickle(rawpath + '/' + s + '_LFP_peaks1.pkl')
+    # lfp_all = pd.read_pickle(rawpath + '/' + s + '_LFP_all1.pkl')
         
      
     filepath = os.path.join(rwpath, name)
@@ -131,20 +119,18 @@ for s in datasets:
 #%%
     
     fs = 1250
-    window_ep = nap.IntervalSet(start = new_sws_ep['start'].values - 5, end = new_sws_ep['start'].values + 5)
+    #window_ep = nap.IntervalSet(start = new_sws_ep['start'].values - 5, end = new_sws_ep['start'].values + 5)
     
-    lfpsig = lfp.restrict(window_ep)
+    lfpsig = lfp #.restrict(window_ep)
     
-    # LFP_PETH = perievent_Tsd(lfp,nap.Ts(up_ep['start'].values), minmax = (-1,1))
-    # LFP_mean = pd.Series(data = LFP_PETH['mean'])    
-
+    
    
 #%%         
  
     fmin = 0.5
     fmax = 150
     nfreqs = 100
-    ncyc = 5
+    ncyc = 3 #5
     si = 1/fs
     
     downsample = 10
@@ -159,46 +145,93 @@ for s in datasets:
     for f in range(len(freqs)):
          wavelet = MorletWavelet(freqs[f],ncyc,si)
          tmpspec = fftconvolve(lfpsig.values, wavelet, mode = 'same')
-         wavespec[freqs[f]] = tmpspec[::downsample]
+         wavespec[freqs[f]] = tmpspec [::downsample]
          temppower = abs(wavespec[freqs[f]]) #**2
-         powerspec[freqs[f]] = 10*np.log10(temppower.values/np.mean(temppower.values))
+         powerspec[freqs[f]] =  temppower #(temppower.values/np.median(temppower.values))
     
+ #%%
+        
     DU = nap.Tsd(up_ep['start'].values)
-    DU = nap.TsGroup({0:nap.Ts(up_ep['start'].values)})
+      
+    realigned = powerspec.index[powerspec.index.get_indexer(DU.index.values, method='nearest')]
     
-    a = powerspec[powerspec.columns[0]].index[powerspec[powerspec.columns[0]].index.get_indexer(DU.index.values, method='nearest')]
+    pspec_median = pd.DataFrame()
+    pspec_z = pd.DataFrame()
+    
+    for i in range(len(powerspec.columns)):
+        tmp = nap.compute_perievent(powerspec[powerspec.columns[i]], nap.Ts(realigned.values) , minmax = (-1,1), time_unit = 's')
+           
+        peth_all = []
+        for j in range(len(tmp)):
+            peth_all.append(tmp[j].as_series())
+            
+        trials = pd.concat(peth_all, axis = 1, join = 'outer')
+        
+        z = ((trials - trials.mean()) / trials.std()).mean(axis = 1)    
+        pspec_z[freqs[i]] = z
+        
+        mdn = (trials/trials.median()).mean(axis = 1)
+        pspec_median[freqs[i]] = mdn
+        
+    all_pspec_median = pd.concat((pspec_median, all_pspec_median))
+    all_pspec_z = pd.concat((pspec_z, all_pspec_z))
     
     
-    
-    
-    
-    b = nap.compute_perievent(powerspec[powerspec.columns[0]],nap.Ts(a.values),minmax = (-0.5,0.5), )
-    
-    
-    peth = {}
-    peth_all = []
-    for j in range(len(b)):
-        peth_all.append(b[j].as_series())
-    peth['all'] = pd.concat(peth_all, axis = 1, join = 'outer')
          
-    #%%     
-    #      powerspec = nap.TsdFrame(t = LFP_mean.index.values, columns = freqs)
-         
-    #      temppower = abs(wavespec[freqs[f]])**2
-    #      powerspec[freqs[f]] = 10*np.log10(temppower.values/np.mean(temppower.values))
+#%%
+
+specgram_z = all_pspec_z.groupby(all_pspec_z.index).mean()
+specgram_m = all_pspec_median.groupby(all_pspec_median.index).mean()
     
-    # ##Plotting 
-    
-    labels = 2**np.arange(8)
+# ##Plotting 
+
+## Z-scored 
+
+labels = 2**np.arange(8)[2:]
+norm = colors.TwoSlopeNorm(vmin=specgram_z[freqs[38:]][-0.1:0.5].values.min(),vcenter=0, vmax = specgram_z[freqs[38:]][-0.1:0.5].values.max())
        
-    plt.figure()
-    plt.imshow(powerspec.T, aspect = 'auto', cmap = 'jet', interpolation='bilinear', origin = 'lower', extent = [powerspec.index.values[0], powerspec.index.values[-1],np.log10(fmin),np.log10(fmax)])
-    plt.ylabel('log(freq)')  
-    plt.yticks(np.log10(labels), labels = labels)
-    
-    
-    
-    
+plt.figure()
+plt.title('Z-scored spectrogram')
+plt.imshow(specgram_z[freqs[38:]][-0.1:0.5].T, aspect = 'auto', cmap = 'seismic', interpolation='bilinear', 
+           origin = 'lower',
+           extent = [specgram_z[freqs[38:]][-0.1:0.5].index.values[0], 
+                     specgram_z[freqs[38:]][-0.1:0.5].index.values[-1],
+                     np.log10(labels[0]),
+                     np.log10(labels[-1])], 
+           norm = norm)
+plt.xlabel('Time from DU (s)')
+plt.ylabel('Freq (Hz)')  
+plt.yticks(np.log10(labels), labels = labels)
+plt.colorbar()
+plt.axvline(0, color = 'k',linestyle = '--')
+plt.gca().set_box_aspect(1)
+
+## Median Normalized
+
+norm = colors.TwoSlopeNorm(vmin=specgram_m[freqs[38:]][-0.1:0.5].values.min(),vcenter=1, vmax = specgram_m[freqs[38:]][-0.1:0.5].values.max())
+       
+plt.figure()
+plt.title('Median-normalized spectrogram')
+plt.imshow(specgram_m[freqs[38:]][-0.1:0.5].T, aspect = 'auto', cmap = 'seismic', interpolation='bilinear', 
+           origin = 'lower',
+           extent = [specgram_m[freqs[38:]][-0.1:0.5].index.values[0],
+                     specgram_m[freqs[38:]][-0.1:0.5].index.values[-1],
+                     np.log10(labels[0]),
+                     np.log10(labels[-1])], 
+           norm = norm)
+plt.xlabel('Time from DU (s)')
+plt.ylabel('Freq (Hz)')  
+plt.yticks(np.log10(labels), labels = labels)
+plt.colorbar()
+plt.axvline(0, color = 'k', linestyle ='--')
+plt.gca().set_box_aspect(1)
+
+#%%
+
+specgram_z.to_pickle(data_directory + '/specgram_z.pkl')
+specgram_m.to_pickle(data_directory + '/specgram_m.pkl')
+
+
   
     
     

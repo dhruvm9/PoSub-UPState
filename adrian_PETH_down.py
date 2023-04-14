@@ -5,12 +5,6 @@ Created on Thu Aug 19 09:37:05 2021
 
 @author: dhruv
 """
-# -*- coding: utf-8 -*-
-"""
-Created on Tue Jul 14 11:21:34 2020
-
-@author: Dhruv
-"""
 
 #loading the dataset
 import numpy as np 
@@ -167,10 +161,10 @@ for s in datasets:
         fig, ax = plt.subplots()
         #cax = ax.imshow(finalRates.T,extent=[-250 , 150, len(interneuron) , 1],aspect = 'auto', cmap = 'hot')
         # cax = ax.imshow(finalRates.T,extent=[-250 , 50, len(neurons) , 1],aspect = 'auto', cmap = 'inferno', vmin = 0, vmax = 3.54)
-        cax = ax.imshow(finalRates.T,extent=[-150 , 50, len(neurons) , 1],aspect = 'auto', cmap = 'inferno')
+        cax = ax.imshow(finalRates.T,extent=[-150 , 50, len(neurons) , 1],aspect = 'auto', cmap = 'inferno', vmin = 0, vmax = 2)
         # plt.imshow(finalRates.T,extent=[-250 , 250, len(neurons) , 1],aspect = 'auto', cmap = 'hot')        
         # plt.imshow(finalRates.T,extent=[-250 , 250, len(pyr) , 1],aspect = 'auto', cmap = 'hot')        
-        cbar = fig.colorbar(cax, ticks=[0, finalRates.values.max()], label = 'Norm. Firing Rate')
+        cbar = fig.colorbar(cax, ticks=[0, 2], label = 'Norm. Firing Rate')
         # cbar.ax.set_yticklabels(['0', str(round(finalRates.values.max(),2))])
         cbar.ax.set_yticklabels(['0', '>=2'])
         plt.title('Event-related Xcorr, aligned to DOWN state onset_' + s)

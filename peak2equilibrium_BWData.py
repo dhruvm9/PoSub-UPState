@@ -13,6 +13,7 @@ import os, sys
 import time 
 import matplotlib.pyplot as plt 
 from scipy.stats import kendalltau, pearsonr, wilcoxon, mannwhitneyu
+from itertools import combinations
 import seaborn as sns
 
 #%% 
@@ -27,6 +28,8 @@ allrates = []
 
 uponset = []
 peak_above_mean = []
+
+allPETH = pd.DataFrame()
 
 data_directory = '/media/DataDhruv/Recordings/WatsonBO'
 datasets = np.genfromtxt(os.path.join(data_directory,'dataset_DM.list'), delimiter = '\n', dtype = str, comments = '#')
@@ -92,6 +95,19 @@ for s in datasets:
 # COMPUTE EVENT CROSS CORRS
 ## Peak firing       
 
+### UD 
+    
+    cc = nap.compute_eventcorrelogram(spikes, nap.Tsd(down_ep['start'].values), binsize = 0.005, windowsize = 0.255, ep = up_ep, norm = True)
+    tmp = pd.DataFrame(cc)
+    tmp = tmp.rolling(window=8, win_type='gaussian',center=True,min_periods=1).mean(std = 2)
+    
+    # plt.imshow(cc.T,  aspect = 'auto', cmap = 'inferno', origin = 'lower')
+    
+
+
+#%% 
+### DU
+
     cc = nap.compute_eventcorrelogram(spikes, nap.Tsd(up_ep['start'].values), binsize = 0.005, windowsize = 0.255, ep = up_ep, norm = True)
     tmp = pd.DataFrame(cc)
     tmp = tmp.rolling(window=8, win_type='gaussian',center=True,min_periods=1).mean(std = 2)
@@ -102,6 +118,7 @@ for s in datasets:
     if len(dd.columns) > 0:
                     
         indexplot = []
+        tokeep = []
         peaks_keeping = []
         rates_keeping = []
                 
@@ -109,6 +126,7 @@ for s in datasets:
         for i in range(len(dd.columns)):
             a = np.where(dd.iloc[:,i] > 0.5)
             if len(a[0]) > 0:
+                tokeep.append(dd.columns[i])  
                 peaks_keeping.append(dd.iloc[:,i].max())
                 peak_above_mean.append(dd.iloc[:,i].max())
                 res = dd.iloc[:,i].index[a]
@@ -116,11 +134,15 @@ for s in datasets:
                 uponset.append(res[0])
                 rates_keeping.append(rates[i])
                 allrates.append(rates[i])
-    
+
+    allPETH = pd.concat([allPETH, dd[tokeep]], axis = 1)
+        
     corr, p = kendalltau(indexplot, peaks_keeping)
     corrs.append(corr)
     pvals.append(p)
-    
+
+#%% 
+        
     # plt.figure()
     # plt.rc('font', size = 15)
     # plt.title('Peak-mean rate ratio v/s UP onset_' + s)
@@ -128,6 +150,17 @@ for s in datasets:
     # plt.xlabel('Time from UP onset (s)')
     # plt.ylabel('Peak-mean rate ratio')
     # plt.legend(loc = 'upper right')
+
+#%% 
+
+#Arrange DU by peak-to-mean
+
+    # idx = np.argsort(peaks_keeping)
+    # plt.imshow(dd[dd.columns[idx]].T, aspect = 'auto', cmap = 'inferno', 
+    #            extent =[0,150,len(spikes),1],
+    #            origin = 'lower')
+
+
 
 #%% 
 
@@ -182,4 +215,21 @@ plt.ylabel('UP onset delay (s)')
 plt.legend(loc = 'upper right')
 plt.legend(loc = 'upper right')
 plt.gca().set_box_aspect(1)
+
+
+#%% 
+
+#Arrange DU by peak-to-mean
+
+idx = np.argsort(peak_above_mean)
+allPETH.columns = range(allPETH.columns.size)
+
+plt.figure()
+plt.imshow(allPETH[allPETH.columns[idx]].T, aspect = 'auto', cmap = 'inferno', 
+            extent =[0,150,allPETH.columns.size,1],
+            origin = 'lower', vmin = 0, vmax = 2)
+plt.colorbar()
+plt.plot([i * 1000 for i in uponset],np.arange(1,951,1),'o', color = 'w', markersize = 1)
+
+#%% 
 

@@ -155,7 +155,7 @@ for s in datasets:
       
     bounds = [-0.2,0.3]
     fig, ax = plt.subplots()
-    cax = ax.imshow(gamma_all[bounds[0]:bounds[1]].T,extent=[bounds[0] , bounds[1], data.nChannels , 1],aspect = 'auto', cmap = 'inferno')
+    cax = ax.imshow(gamma_all[bounds[0]:bounds[1]].T,extent=[bounds[0] , bounds[1], data.nChannels , 1],aspect = 'auto', cmap = 'OrRd')
     cbar = fig.colorbar(cax, ticks=[gamma_all[bounds[0]:bounds[1]].values.min(), gamma_all[bounds[0]:bounds[1]].values.max()], label = 'Gamma power')
     plt.xlabel('Lag (s)')
     plt.ylabel('Channel number')
@@ -198,6 +198,20 @@ for s in datasets:
     plt.vlines(peakval[0],55, gamma_all[seq[0]].loc[peakval[0]], color = 'r', linestyle = 'dashed')
     plt.vlines(peakval[-1],55, gamma_all[seq[-1]].loc[peakval[-1]], color = 'r', linestyle = 'dashed')
     plt.gca().set_box_aspect(1)
+
+#%% 
+
+    ###Showing threshold 
+    plt.figure()
+    plt.plot(gamma_all[-0.2:0.3][seq[4]], color = 'r')
+    plt.plot(w[-0.2:0.3][seq[4]]*50, color = 'k')
+    plt.axvline(w[-0.2:0.3][seq[4]].idxmax(),linestyle = '--', color = 'silver')
+    plt.axvline(0,linestyle = '--', color = 'silver')
+    plt.xticks(visible = True)
+    plt.yticks(visible = True)
+    plt.gca().set_box_aspect(1)
+    
+    
     
     #%%
 # ############################################################################################### 

@@ -187,22 +187,24 @@ specgram_m = all_pspec_median.groupby(all_pspec_median.index).mean()
 
 ## Z-scored 
 
-labels = 2**np.arange(8)[2:]
+labels = 2**np.arange(8)[3:]
 norm = colors.TwoSlopeNorm(vmin=specgram_z[freqs[38:]][-0.1:0.5].values.min(),vcenter=0, vmax = specgram_z[freqs[38:]][-0.1:0.5].values.max())
        
-plt.figure()
+fig, ax = plt.subplots()
 plt.title('Z-scored spectrogram')
-plt.imshow(specgram_z[freqs[38:]][-0.1:0.5].T, aspect = 'auto', cmap = 'seismic', interpolation='bilinear', 
+cax = ax.imshow(specgram_z[freqs[38:]][-0.1:0.5].T, aspect = 'auto', cmap = 'seismic', interpolation='bilinear', 
            origin = 'lower',
            extent = [specgram_z[freqs[38:]][-0.1:0.5].index.values[0], 
                      specgram_z[freqs[38:]][-0.1:0.5].index.values[-1],
-                     np.log10(labels[0]),
-                     np.log10(labels[-1])], 
+                     np.log10(specgram_z[freqs[38:]].columns[0]),
+                     np.log10(specgram_z[freqs[38:]].columns[-1])], 
            norm = norm)
 plt.xlabel('Time from DU (s)')
-plt.ylabel('Freq (Hz)')  
+plt.xticks([0, 0.25, 0.5])
+plt.ylabel('Freq (Hz)')
 plt.yticks(np.log10(labels), labels = labels)
-plt.colorbar()
+cbar = fig.colorbar(cax, label = 'Power (z)')
+# cbar = fig.colorbar(cax, ticks=[specgram_z[freqs[38:]][-0.1:0.5].values.min(),0, specgram_z[freqs[38:]][-0.1:0.5].values.max()], label = 'Power (z-scored)')
 plt.axvline(0, color = 'k',linestyle = '--')
 plt.gca().set_box_aspect(1)
 
@@ -216,8 +218,8 @@ plt.imshow(specgram_m[freqs[38:]][-0.1:0.5].T, aspect = 'auto', cmap = 'seismic'
            origin = 'lower',
            extent = [specgram_m[freqs[38:]][-0.1:0.5].index.values[0],
                      specgram_m[freqs[38:]][-0.1:0.5].index.values[-1],
-                     np.log10(labels[0]),
-                     np.log10(labels[-1])], 
+                     np.log10(specgram_z[freqs[38:]].columns[0]),
+                     np.log10(specgram_z[freqs[38:]].columns[-1])], 
            norm = norm)
 plt.xlabel('Time from DU (s)')
 plt.ylabel('Freq (Hz)')  

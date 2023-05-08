@@ -20,7 +20,8 @@ from sklearn.manifold import Isomap
 
 # data_directory = '/media/DataDhruv/Dropbox (Peyrache Lab)/Peyrache Lab Team Folder/Data/AdrianPoSub/###AllPoSub'
 data_directory = '/media/adrien/LaCie/PoSub-UPState/Data/###AllPoSub'
-datasets = np.genfromtxt(os.path.join(data_directory,'dataset_Hor_DM.list'), delimiter = '\n', dtype = str, comments = '#')
+# datasets = np.genfromtxt(os.path.join(data_directory,'dataset_Hor_DM.list'), delimiter = '\n', dtype = str, comments = '#')
+datasets = np.genfromtxt(os.path.join(data_directory,'dataset_test.list'), delimiter = '\n', dtype = str, comments = '#')
 
 rwpath = '/media/adrien/LaCie/PoSub-UPState/Project/Data'
 
@@ -198,7 +199,7 @@ for s in datasets:
     projection = nap.TsdFrame(t = sleep_rate.index.values, d = p_sleep, columns = ['x', 'y'])
     projection.to_pickle(rawpath + '/' + s + '_projection.pkl')  
     
-    np.save(rawpath + '/' + s + '_pwake.npy')
+    np.save(rawpath + '/' + s + '_pwake.npy',p_wake)
     np.save(rawpath + '/' + s + '_RGB.npy', RGB)      
     
 #%% 

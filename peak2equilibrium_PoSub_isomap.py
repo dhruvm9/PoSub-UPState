@@ -271,7 +271,7 @@ summ['p2'] = projection[:,1]
 # b = np.where(np.logical_and(summ['p2']>=-2, summ['p2']<=0))
 # np.intersect1d(a,b)
 
-examples = [2, 523, 528, 1081, 895,828,1061,226,208,379,1018]
+examples = [2, 523, 528, 1081, 895,828,1061,226,208,379,1018, 378]
 
 for i in examples:
 

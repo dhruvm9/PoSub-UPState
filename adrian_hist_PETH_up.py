@@ -31,7 +31,7 @@ allspeeds_up = []
 allspeeds_up_ex = []
 pvals = []
 pvals_ex = []
-
+N_units = []
 
 for s in datasets:
     print(s)
@@ -40,6 +40,7 @@ for s in datasets:
     rawpath = os.path.join(rwpath,s)
 
     spikes, shank = loadSpikeData(path)
+    N_units.append(len(spikes))
     n_channels, fs, shank_to_channel = loadXML(rawpath)
 
 # ############################################################################################### 

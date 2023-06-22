@@ -281,7 +281,7 @@ for s in datasets:
     wake_rate = wake_rate.loc[ang.index.values]
         
     wake_rate = pd.concat([wake_rate, pd.DataFrame(ang)], axis = 1)
-    wake_rate = wake_rate.sample(frac = 0.5)
+    wake_rate = wake_rate.sample(frac = 0.5).sort_index()
 
 ### Sleep binning 
 
@@ -291,35 +291,23 @@ for s in datasets:
     tokeep = np.where((up_ep['end'] - up_ep['start']) > 0.5)
     
     du = nap.IntervalSet(start = up_ep.iloc[tokeep]['start'] - 0.25, end = up_ep.iloc[tokeep]['start'] + 0.5) 
-       
-    refs = []
-    
-    for i in tokeep[0]:
-        rng = uniform(0,1)
-        times = (up_ep.iloc[i]['start'] + (rng * (up_ep.iloc[i]['end'] - up_ep.iloc[i]['start'])))
-        refs.append(times)
+    longdu = nap.IntervalSet(start = up_ep.iloc[tokeep]['start'] - 0.25, end = up_ep.iloc[tokeep]['start'] + 0.5) 
      
-    rnd = nap.IntervalSet(start = pd.Series(refs).values - 0.25, end = pd.Series(refs).values + 0.25)
-    
     
     num_overlapping_bins = int(sleep_binwidth/sleep_dt)    
-    
-    sleep_count = spikes[hd].count(sleep_dt,du) 
+        
+    sleep_count = spikes[hd].count(sleep_dt,longdu) 
     sleep_count = sleep_count.as_dataframe()
     sleep_rate = np.sqrt(sleep_count/sleep_dt)
     sleep_rate = sleep_rate.rolling(window = num_overlapping_bins, win_type = 'gaussian', center = True, min_periods = 1, axis = 0).mean(std = 3)
-        
-    rnd_count = spikes[hd].count(sleep_dt,rnd) 
-    rnd_count = rnd_count.as_dataframe()
-    rnd_rate = np.sqrt(rnd_count/sleep_dt)
-    rnd_rate = rnd_rate.rolling(window = num_overlapping_bins, win_type = 'gaussian', center = True, min_periods = 1, axis = 0).mean(std = 3)
     
-    rate = np.vstack([wake_rate.loc[:, wake_rate.columns != 'ang'].values, sleep_rate.sample(frac = 0.01).values]) #Take 1000 random values 
-               
+    fit_rate = nap.TsdFrame(sleep_rate).restrict(du)
+    
+    rate = np.vstack([wake_rate.loc[:, wake_rate.columns != 'ang'].values, fit_rate.as_dataframe().sample(frac = 0.01).values])
+    
     fit = Isomap(n_components = 2, n_neighbors = 200).fit(rate) 
     p_wake = fit.transform(wake_rate.loc[:, wake_rate.columns != 'ang'])    
     p_sleep = fit.transform(sleep_rate)
-    p_rnd = fit.transform(rnd_rate)
     
 
     H = wake_rate['ang'].values/(2*np.pi)
@@ -331,15 +319,13 @@ for s in datasets:
     
     p_wake = p_wake - [truex, truey]
     p_sleep = p_sleep - [truex, truey]
-    p_rnd = p_rnd - [truex, truey]
-                
+                   
     projection = nap.TsdFrame(t = sleep_rate.index.values, d = p_sleep, columns = ['x', 'y'])
-    ctrl = nap.TsdFrame(t = rnd_rate.index.values, d = p_rnd, columns = ['x', 'y'] )
 
 #%% 
 
 ##Angular direction, radius and velocity     
-    # angdir = nap.Tsd(t = projection.index.values, d = np.arctan2(projection['y'].values, projection['x'].values))
+    angdir = nap.Tsd(t = projection.index.values, d = np.arctan2(projection['y'].values, projection['x'].values))
     # radius = nap.Tsd(t = projection.index.values, 
     #                   d = np.sqrt((projection['x'].values**2) 
     #                   + (projection['y'].values**2)))
@@ -354,15 +340,15 @@ for s in datasets:
     
         
 #%% 
-    angdiff = (angdir + 2*np.pi)%(2*np.pi)
-    angdiff = np.unwrap(angdiff)
+    # angdiff = (angdir + 2*np.pi)%(2*np.pi)
+    # angdiff = np.unwrap(angdiff)
     
-    angs = pd.Series(index = projection.index.values, data = angdiff)
-    angs = angs.rolling(window = 20, win_type='gaussian', center=True, min_periods=1).mean(std=1)
+    # angs = pd.Series(index = projection.index.values, data = angdiff)
+    # angs = angs.rolling(window = 20, win_type='gaussian', center=True, min_periods=1).mean(std=1)
     
     # angdiff = np.minimum((2*np.pi - abs(angdiff.values)), abs(angdiff.values))
     
-    angvel = nap.Tsd(t = projection.index.values, d = np.abs(np.gradient(angs.values)))    
+    # angvel = nap.Tsd(t = projection.index.values, d = np.abs(np.gradient(angs.values)))    
     # radvel = nap.Tsd(t = projection.index.values[:-1], d = (np.diff(radius.values)))
     
     
@@ -405,10 +391,7 @@ for s in datasets:
                        d = np.sqrt((projection['x'].values**2) 
                       + (projection['y'].values**2)))
     
-    ctrl_radius = nap.Tsd(t = ctrl.index.values, 
-                       d = np.sqrt((ctrl['x'].values**2) 
-                      + (ctrl['y'].values**2)))
-    
+        
     
     bins = np.arange(0, np.ceil(radius.max()), 1)
     
@@ -420,37 +403,48 @@ for s in datasets:
     # plt.figure()
     # plt.plot(counts)
     # plt.axvline(ringradius, color = 'k')
-      
     
+    allvar_du = [] 
+    allvar_ctrl = [] 
+    crosstimes = []
+        
     plt.figure()    
     # plt.scatter(p_wake[:,0], p_wake[:,1], c = RGB)
     
     for k in range(len(du)): #examples: #range(len(du)): #examples: #range(len(du)):  
 
-        traj = projection.restrict(nap.IntervalSet(start = du.loc[[k]]['start'], 
-                                                   end = du.loc[[k]]['end']))
-        traj.index = traj.index.values - (du.loc[[k]]['start'].values + 0.25)
+        traj = projection.restrict(nap.IntervalSet(start = longdu.loc[[k]]['start'], 
+                                                   end = longdu.loc[[k]]['end']))
+        traj.index = traj.index.values - (longdu.loc[[k]]['start'].values + 0.25)
         traj.index = [round (j,4) for j in traj.index.values]                               
                                    
         traj = traj.as_dataframe()
                   
-        vec = traj[-0.25:0.15]
-        # tx = vec['x'] - vec['x'].loc[0]
-        # ty = vec['y'] - vec['y'].loc[0]
-        # tr = nap.Tsd(t = tx. index. values, d = np.sqrt((tx.values**2) + (ty.values**2)))
+        vec = traj[-0.25:0.5]
+        vx = vec[0:0.15]
+             
+        
         tr = nap.Tsd(t = vec. index. values, d = np.sqrt((vec['x'].values**2) + (vec['y'].values**2)))
-  
+               
                 
-        ix = np.where(tr[0:0.15].values > ringradius)[0]
+        ix = np.where(tr[0:0.1].values > ringradius)[0]
+       
+        
         iy = np.where(tr[-0.25:0].values > ringradius)[0]
         
-        if (len(ix) > 0) and (len(iy) > 0):
+        if (len(ix) > 0)and (len(iy) > 0):
            
             ix1 = ix[0]
+            crosstimes.append(vx.index[ix1])
+            winlength = len(vx[vx.index[ix1]:0.15])
             
             tokeep.append(k)     
             
+            rng = uniform(0,1)
+            ctrl_start = vx.index[ix1] + (rng* (0.25 - vx.index[ix1])) 
             
+            vectimes = vec[0:0.5].index.values
+            idx = (np.abs(vectimes - ctrl_start)).argmin()
             
         # if tr.loc[0.05] > 5:
                 
@@ -476,7 +470,17 @@ for s in datasets:
             plt.plot(rotframe['x'][0:0.15], rotframe['y'][0:0.15], color = 'silver', alpha = 0.5)
             # plt.plot(rotframe['x'][-0.25:0], rotframe['y'][-0.25:0], color = 'k', alpha = 0.2, zorder = 5, linewidth = 1)
             # plt.plot(rotframe['x'][0:0.15], rotframe['y'][0:0.15], color = 'silver', alpha = 0.5, zorder = 2)
-     
+
+#Compute the Variance of angles 
+
+            var_du = np.arctan2(vx['y'][vx.index[ix1]:0.15], vx['x'][vx.index[ix1]:0.15]).var()
+            allvar_du.append(var_du)
+            
+            var_ctrl = np.arctan2(vec['y'].loc[vectimes[idx+10:idx + winlength+10]],vec['x'].loc[vectimes[idx+10:idx + winlength+10]]).var()
+            allvar_ctrl.append(var_ctrl)
+        
+            # if np.isnan(var_ctrl) == True:
+            #     sys.exit()
 #%% 
 
     angles = np.arctan2(vec['y'][0:0.15].iloc[ix], vec['x'][0:0.15].iloc[ix]) 

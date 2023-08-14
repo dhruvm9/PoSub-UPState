@@ -22,7 +22,7 @@ from scipy.stats import wilcoxon
 import matplotlib.cm as cm
 
 data_directory = '/media/DataDhruv/Dropbox (Peyrache Lab)/Peyrache Lab Team Folder/Data/AdrianPoSub/###AllPoSub'
-datasets = np.loadtxt(os.path.join(data_directory,'dataset_Hor_DM.list'), delimiter = '\n', dtype = str, comments = '#')
+datasets = np.genfromtxt(os.path.join(data_directory,'dataset_Hor_DM.list'), delimiter = '\n', dtype = str, comments = '#')
 # datasets = np.loadtxt(os.path.join(data_directory,'dataset_test.list'), delimiter = '\n', dtype = str, comments = '#')
 rwpath = '/media/DataDhruv/Dropbox (Peyrache Lab)/Peyrache Lab Team Folder/Projects/PoSub-UPstate/Data'
 
@@ -102,27 +102,45 @@ for s in datasets:
     new_wake_ep  = data.read_neuroscope_intervals(name = 'new_wake', path2file = file)
     
     peaks = pd.read_pickle(rawpath + '/' + s + '_LFP_peaks.pkl')
-    gamma_all = pd.read_pickle(rawpath + '/' + s + '_gamma_all.pkl')
+    lfp_all = pd.read_pickle(rawpath + '/' + s + '_LFP_all1.pkl')
+    gamma_all = pd.read_pickle(rawpath + '/' + s + '_highgamma_all1.pkl')
     
-    
+    bounds = [-0.2,0.3]
+    fig, ax = plt.subplots()
+    cax = ax.imshow(gamma_all[bounds[0]:bounds[1]].T,extent=[bounds[0] , bounds[1], data.nChannels , 1],aspect = 'auto', cmap = 'inferno')
+    cbar = fig.colorbar(cax, ticks=[gamma_all[bounds[0]:bounds[1]].values.min(), gamma_all[bounds[0]:bounds[1]].values.max()], label = 'Gamma power')
+    plt.title('Delta PETH_' + s)
+    plt.xlabel('Lag (s)')
+    plt.ylabel('Channel number')
+    plt.yticks([1,64])
+    # plt.title('Gamma PETH_' + s)
+    plt.plot(lfp_all[bounds[0]:bounds[1]][seq[1]].index.values, 
+              (-0.003* lfp_all[bounds[0]:bounds[1]][seq[1]].values)+10, color = 'white')
+    plt.plot(lfp_all[bounds[0]:bounds[1]][seq[3]].index.values, 
+              (-0.003* lfp_all[bounds[0]:bounds[1]][seq[3]].values)+25, color = 'white') #'gainsboro')
+    plt.plot(lfp_all[bounds[0]:bounds[1]][seq[5]].index.values, (-0.003* lfp_all[bounds[0]:bounds[1]][seq[5]].values)+40, color = 'white') #'silver')
+    plt.plot(lfp_all[bounds[0]:bounds[1]][seq[7]].index.values, (-0.003* lfp_all[bounds[0]:bounds[1]][seq[7]].values)+55, color = 'white') #'grey')
+    plt.axvline(0, color = 'white', linestyle = '--')
+    ax.set_box_aspect(1)
     
            
-    fig, ax = plt.subplots()
-    cax = ax.imshow(gamma_all[-0.75:0.75].T,extent=[-0.75 , 0.75, data.nChannels , 1],aspect = 'auto', cmap = 'inferno')
-    plt.xlabel('lag (s)')
-    plt.ylabel('Channel number')
-    plt.title('Delta PETH_' + s)
-    cbar = fig.colorbar(cax, ticks=[gamma_all[-0.75:0.75].values.min(), lfp_all[0.75:0.75].values.max()], label = 'LFP magnitude')
-    
-    # plt.figure()
+    # fig, ax = plt.subplots()
+    # cax = ax.imshow(gamma_all[-0.75:0.75].T,extent=[-0.75 , 0.75, data.nChannels , 1],aspect = 'auto', cmap = 'inferno')
     # plt.title('Delta PETH_' + s)
     # plt.xlabel('lag (s)')
-    # plt.ylabel('LFP magnitude')
-    # j = 0
-    # for i in seq:
-    #     plt.plot(lfp_all[-0.75:0.75][i], color=cm.inferno(j/8), label = j)
-    #     plt.legend(loc = 'upper right')
-    #     j+=1
+    # plt.ylabel('Channel number')
+    # plt.title('Delta PETH_' + s)
+    # cbar = fig.colorbar(cax, ticks=[gamma_all[-0.75:0.75].values.min(), gamma_all[-0.75:0.75].values.max()], label = 'LFP magnitude')
+    
+    plt.figure()
+    plt.title('Delta PETH_' + s)
+    plt.xlabel('lag (s)')
+    plt.ylabel('LFP magnitude')
+    j = 0
+    for i in seq:
+        plt.plot(gamma_all[-0.75:0.75][i], color=cm.gist_heat(j/8), label = j)
+        plt.legend(loc = 'upper right')
+        j+=1
 
 
     

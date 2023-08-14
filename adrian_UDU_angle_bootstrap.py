@@ -247,8 +247,7 @@ p_rel = relcounts_all/sum(relcounts_all)
      
 plt.figure()
 plt.stairs(p_rel,bins, linewidth =  2, color = 'rosybrown')
-plt.hlines(minvals, xmin = bins[0:-1], xmax = bins[1:], color = 'k', linewidth = 2)
-plt.hlines(maxvals, xmin = bins[0:-1], xmax = bins[1:],  color = 'r', linewidth = 2)
+plt.fill_between(0.5 * (bins[1:] + bins[:-1]), p_rel- minvals, p_rel + (maxvals - p_rel), color = 'rosybrown', alpha = 0.2)
 plt.xlabel('Ang diff between DU and UD (rad)')
 plt.ylabel('% events')
              

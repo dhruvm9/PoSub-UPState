@@ -98,7 +98,9 @@ for s in datasets:
     else: 
         lfp = loadLFP(os.path.join(rawpath, name + '.eeg'), n_channels, 1, 1250, 'int16')
     
-    lfp = downsample(lfp, 1, 5)
+    downsample = 5 
+    lfp = lfp[::downsample]
+    # lfp = downsample(lfp, 1, 5)
     
     acceleration = loadAuxiliary(rawpath, 1, fs = 20000) 
     newsleep_ep = refineSleepFromAccel(acceleration, sleep_ep)

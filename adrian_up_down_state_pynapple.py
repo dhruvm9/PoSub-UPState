@@ -20,11 +20,12 @@ from scipy.stats import wilcoxon
 
 
 data_directory = '/media/DataDhruv/Dropbox (Peyrache Lab)/Peyrache Lab Team Folder/Data/AdrianPoSub/###AllPoSub'
-datasets = np.loadtxt(os.path.join(data_directory,'dataset_Ver_DM.list'), delimiter = '\n', dtype = str, comments = '#')
+datasets = np.genfromtxt(os.path.join(data_directory,'dataset_Ver_DM.list'), delimiter = '\n', dtype = str, comments = '#')
 rwpath = '/media/DataDhruv/Dropbox (Peyrache Lab)/Peyrache Lab Team Folder/Projects/PoSub-UPstate/Data'
 
 
 all_down_dur = []
+
 
 for s in datasets:
     print(s)
@@ -87,8 +88,7 @@ for s in datasets:
     total2 = total2.sum(axis =1)
     total2 = nap.Tsd(total2)
     idx = total2.threshold(np.percentile(total2.values,20),'below')
-      
-      
+            
     down_ep = idx.time_support
     
     down_ep = nap.IntervalSet(start = down_ep['start'], end = down_ep['end'])

@@ -42,6 +42,8 @@ ratios = []
 n_pyr = []
 n_int = []
 
+range_UDonset = []
+
 for s in datasets:
     print(s)
     name = s.split('/')[-1]
@@ -134,6 +136,8 @@ for s in datasets:
                
     rates = []
     reslist = []
+    
+    sess_UD = []
             
     for i in neurons:
         # spk2 = spikes[i].restrict(ep_D).as_units('ms').index.values
@@ -227,6 +231,10 @@ for s in datasets:
     p_dn_ex.append(p_ex)
         
     stk_ex = st_ex[ix_ex]
+    
+    sess_UD.append(stk_ex)
+    
+    range_UDonset.append(np.std(sess_UD))
     
     # data_ex = pd.DataFrame()
     # data_ex['depth'] = depths_keeping_ex.flatten()
@@ -516,7 +524,7 @@ plt.ylabel('Velocity (cm/s)')
 #Raster and LFP code 
 
 # fig, ax = plt.subplots()
-# [plot(spikes[n].restrict(per).as_units('s').fillna(n), '|', color = 'k') for n in spikes.keys()]
+# [plt.plot(spikes[n].restrict(per).as_units('s').fillna(n), '|', color = 'k') for n in spikes.keys()]
 # # plot(lfp.restrict(per).as_units('s'), color = 'k')
 # ax.spines['right'].set_visible(False)
 # ax.spines['left'].set_visible(False)
@@ -534,3 +542,9 @@ plt.ylabel('Velocity (cm/s)')
 
 # fig, ax = plt.subplots()
 # [plt.plot(spikes[i].restrict(per).as_units('ms').fillna(i), '|', color = 'k') for i in desc]
+
+#%% 
+
+plt.scatter(range_UDonset, range_DUonset)
+plt.gca().axline((min(min(range_UDonset),min(range_DUonset)),min(min(range_UDonset),min(range_DUonset)) ), slope=1, color = 'silver', linestyle = '--')
+plt.gca().set_box_aspect(1)

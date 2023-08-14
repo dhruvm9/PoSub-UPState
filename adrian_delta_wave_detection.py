@@ -21,7 +21,7 @@ from scipy.stats import wilcoxon
 import matplotlib.cm as cm
 
 data_directory = '/media/DataDhruv/Dropbox (Peyrache Lab)/Peyrache Lab Team Folder/Data/AdrianPoSub/###AllPoSub'
-datasets = np.loadtxt(os.path.join(data_directory,'dataset_Hor_DM.list'), delimiter = '\n', dtype = str, comments = '#')
+datasets = np.genfromtxt(os.path.join(data_directory,'dataset_Hor_DM.list'), delimiter = '\n', dtype = str, comments = '#')
 # datasets = np.loadtxt(os.path.join(data_directory,'dataset_test.list'), delimiter = '\n', dtype = str, comments = '#')
 rwpath = '/media/DataDhruv/Dropbox (Peyrache Lab)/Peyrache Lab Team Folder/Projects/PoSub-UPstate/Data'
 
@@ -90,6 +90,7 @@ for s in datasets:
 
     n_pyr.append(len(pyr))
     n_int.append(len(interneuron))
+    
     
 # ############################################################################################### 
 #     # LOAD UP AND DOWN STATE, NEW SWS AND NEW WAKE EPOCHS
@@ -187,7 +188,7 @@ for s in datasets:
     lfp_all.to_pickle(rawpath + '/' + s + '_LFP_all1.pkl') 
             
     fig, ax = plt.subplots()
-    cax = ax.imshow(lfp_all[-0.75:0.75].T,extent=[-0.75 , 0.75, data.nChannels , 1],aspect = 'auto', cmap = 'inferno')
+    cax = ax.imshow(lfp_all[-0.2:0.3].T,extent=[-0.2 , 0.3, data.nChannels , 1],aspect = 'auto', cmap = 'inferno')
     plt.xlabel('lag (s)')
     plt.ylabel('Channel number')
     plt.title('Delta PETH_' + s)
@@ -199,7 +200,8 @@ for s in datasets:
     plt.ylabel('LFP magnitude')
     j = 0
     for i in seq:
-        plt.plot(lfp_all[-0.75:0.75][i], color=cm.inferno(j/8), label = j)
+        plt.plot(lfp_all[-0.2:0.3][i], color=cm.gist_heat(j/8), label = j)
+        plt.axvline(0, color = 'k', linestyle = '--')
         plt.legend(loc = 'upper right')
         j+=1
 

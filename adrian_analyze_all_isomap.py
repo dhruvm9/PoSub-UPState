@@ -271,6 +271,7 @@ for s in datasets:
     ctrl_var = ctrl_var.sort_index()
     
     slope.append(np.mean(np.gradient(data_var.mean(axis = 1).loc[0.035:]))/np.diff(data_var.index.values)[0])
+    # slope.append(np.mean(np.gradient(data_var.mean(axis = 1).loc[0.02:]))/np.diff(data_var.index.values)[0])
     cslope.append(np.mean(np.gradient(ctrl_var.mean(axis = 1)))/np.diff(data_var.index.values)[0])
    
     plt.figure()

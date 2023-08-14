@@ -134,34 +134,59 @@ for s in datasets:
     # dd = cc[-250:50]
     dd = cc[-150:50]
     
+    
+    
     #Cell types 
-    # ee = dd[pyr]
+    ee = dd[pyr]
     # ee = dd[interneuron]
     
+    if len(ee.columns) > 0:
+        indexplot = []
+        cellnumber = []
+    
+    for i in range(len(ee.columns)):
+        a = np.where(ee.iloc[:,i][-150:-5] > 0.5)
+    
+        if len(a[0]) > 0:
+            res = ee.iloc[:,i].index[a]
+            indexplot.append(res[-1])
+            cellnumber.append(ee.iloc[:,i].name)
+        else: 
+            indexplot.append(-150)
+            cellnumber.append(ee.iloc[:,i].name)
+    
+
+    
+    
+    
     n = len(depth)
-    # tmp = np.argsort(depth[pyr].flatten())
+    tmp = np.argsort(depth[pyr].flatten())
     # tmp = np.argsort(depth[interneuron].flatten())
-    tmp = np.argsort(depth.flatten())
+    # tmp = np.argsort(depth.flatten())
     desc = tmp[::-1][:n]
     
     order = []
-    # for i in range(len(pyr)): 
-        # order.append(pyr[desc[i]])
+    for i in range(len(pyr)): 
+        order.append(pyr[desc[i]])
     
     # for i in range(len(interneuron)): 
         # order.append(interneuron[desc[i]])
     
         
-    # finalRates = ee[order]
-    finalRates = dd[desc]
+    finalRates = ee[order]
+    # finalRates = dd[desc]
     
-    # if len(ee.columns) > 5:
-    if len(dd.columns) > 5:
+    cellinfo = pd.DataFrame(index = cellnumber, data = indexplot)
+    cellinfo = cellinfo.loc[order]
+    
+    if len(ee.columns) > 5:
+    # if len(dd.columns) > 5:
         
         fig, ax = plt.subplots()
         #cax = ax.imshow(finalRates.T,extent=[-250 , 150, len(interneuron) , 1],aspect = 'auto', cmap = 'hot')
         # cax = ax.imshow(finalRates.T,extent=[-250 , 50, len(neurons) , 1],aspect = 'auto', cmap = 'inferno', vmin = 0, vmax = 3.54)
-        cax = ax.imshow(finalRates.T,extent=[-150 , 50, len(neurons) , 1],aspect = 'auto', cmap = 'inferno', vmin = 0, vmax = 2)
+        cax = ax.imshow(finalRates.T,extent=[-150 , 50, len(pyr)+1 , 1],aspect = 'auto', cmap = 'inferno', vmin = 0, vmax = 2)
+        plt.scatter(cellinfo.values, np.arange(1.5,len(pyr)+1,1), c = 'w', s = 4)
         # plt.imshow(finalRates.T,extent=[-250 , 250, len(neurons) , 1],aspect = 'auto', cmap = 'hot')        
         # plt.imshow(finalRates.T,extent=[-250 , 250, len(pyr) , 1],aspect = 'auto', cmap = 'hot')        
         cbar = fig.colorbar(cax, ticks=[0, 2], label = 'Norm. Firing Rate')

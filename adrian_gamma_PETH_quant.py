@@ -487,7 +487,7 @@ t, p = mannwhitneyu(DUcorr, UDcorr)
 
 #%%
 
-# DU_df = pd.DataFrame(data = (np.vstack([diffcorr_DU, diffp_DU])).T, columns = ['DU', 'pval'])
+DU_df = pd.DataFrame(data = (np.vstack([diffcorr_DU, diffp_DU])).T, columns = ['DU', 'pval'])
 # UD_df = pd.DataFrame(data = (np.vstack([diffcorr_UD, diffp_UD])).T, columns = ['UD', 'pval'])
 
 
@@ -516,7 +516,7 @@ t, p = mannwhitneyu(DUcorr, UDcorr)
 # plt.ylabel('Lag v/s depth (R)')   
 # plt.legend(loc = 'upper right')
 
-# posdf = pd.DataFrame(data = (np.vstack([pos_slope, diffp_DU])).T, columns = ['speed', 'pval'])
+posdf = pd.DataFrame(data = (np.vstack([pos_slope, diffp_DU])).T, columns = ['speed', 'pval'])
 # negdf = pd.DataFrame(data = (np.vstack([neg_slope, diffp_UD])).T, columns = ['speed', 'pval'])
 
 # plt.figure()    
@@ -554,23 +554,57 @@ plt.legend(loc = 'upper right')
 
 unit_speed = regs['spd_ex'][regs['pval_ex'] < 0.05]
 
-plt.figure()    
-plt.title('DU Speed')
-plt.boxplot(unit_speed, positions = [0], showfliers=False, patch_artist=True, boxprops=dict(facecolor='darkslategray', color='darkslategray'),
-            capprops=dict(color='darkslategray'),
-            whiskerprops=dict(color='darkslategray'),
-            medianprops=dict(color='white', linewidth = 2))
-plt.boxplot(posdf['speed'][posdf['pval'] < 0.05], positions = [0.3], showfliers=False, patch_artist=True, boxprops=dict(facecolor='darkslategray', color='darkslategray'),
-            capprops=dict(color='darkslategray'),
-            whiskerprops=dict(color='darkslategray'),
-            medianprops=dict(color='white', linewidth = 2))
+unit_type = pd.DataFrame(['Units' for x in range(len(unit_speed))])
+lfp_type = pd.DataFrame(['LFP' for x in range(len(posdf['speed'][posdf['pval'] < 0.05]))])
+lfp_type.index += 13
 
-x1 = np.random.normal(0.3, 0.01, size=len(posdf['speed'][posdf['pval'] < 0.05]))
-x2 = np.random.normal(0, 0.01, size=len(unit_speed))
-plt.plot(x1, posdf['speed'][posdf['pval'] < 0.05], '.', color = 'k', fillstyle = 'none', markersize = 8, zorder =3)
-plt.plot(x2, unit_speed, '.', color = 'k', fillstyle = 'none', markersize = 8, zorder =3)
-plt.xticks([0, 0.3],['Spikes', 'LFP'])
-plt.ylabel('Velocity (mm/s)')  
+speed_df = pd.DataFrame()
+speed_df['speeds'] = pd.concat([unit_speed, posdf['speed'][posdf['pval'] < 0.05]])
+speed_df = speed_df.reset_index(drop=True)
+speed_df['type'] = pd.concat([unit_type, lfp_type])
+
+
+plt.figure()    
+sns.set_style('white')
+palette = ['darkslategray', 'cadetblue']
+ax = sns.violinplot( x = speed_df['type'], y=speed_df['speeds'] , data = speed_df, dodge=False,
+                    palette = palette,cut = 2,
+                    scale="width", inner=None)
+ax.tick_params(bottom=True, left=True)
+xlim = ax.get_xlim()
+ylim = ax.get_ylim()
+for violin in ax.collections:
+    x0, y0, width, height = violin.get_paths()[0].get_extents().bounds
+    violin.set_clip_path(plt.Rectangle((x0, y0), width / 2, height, transform=ax.transData))
+sns.boxplot(x = speed_df['type'], y=speed_df['speeds'] , data = speed_df, saturation=1, showfliers=False,
+            width=0.3, boxprops={'zorder': 3, 'facecolor': 'none'}, ax=ax)
+old_len_collections = len(ax.collections)
+sns.swarmplot(x = speed_df['type'], y=speed_df['speeds'], data=b, color = 'k', dodge=False, ax=ax)
+# sns.stripplot(x = b['type'], y=b['corr'], data=b, color = 'k', dodge=False, ax=ax)
+for dots in ax.collections[old_len_collections:]:
+    dots.set_offsets(dots.get_offsets())
+ax.set_xlim(xlim)
+ax.set_ylim(ylim)
+plt.ylabel('Velocity (mm/s)')
+ax.set_box_aspect(1)
+
+
+# plt.title('DU Speed')
+# plt.boxplot(unit_speed, positions = [0], showfliers=False, patch_artist=True, boxprops=dict(facecolor='darkslategray', color='darkslategray'),
+#             capprops=dict(color='darkslategray'),
+#             whiskerprops=dict(color='darkslategray'),
+#             medianprops=dict(color='white', linewidth = 2))
+# plt.boxplot(posdf['speed'][posdf['pval'] < 0.05], positions = [0.3], showfliers=False, patch_artist=True, boxprops=dict(facecolor='darkslategray', color='darkslategray'),
+#             capprops=dict(color='darkslategray'),
+#             whiskerprops=dict(color='darkslategray'),
+#             medianprops=dict(color='white', linewidth = 2))
+
+# x1 = np.random.normal(0.3, 0.01, size=len(posdf['speed'][posdf['pval'] < 0.05]))
+# x2 = np.random.normal(0, 0.01, size=len(unit_speed))
+# plt.plot(x1, posdf['speed'][posdf['pval'] < 0.05], '.', color = 'k', fillstyle = 'none', markersize = 8, zorder =3)
+# plt.plot(x2, unit_speed, '.', color = 'k', fillstyle = 'none', markersize = 8, zorder =3)
+# plt.xticks([0, 0.3],['Spikes', 'LFP'])
+# plt.ylabel('Velocity (mm/s)')  
 
 t,p = mannwhitneyu(unit_speed,posdf['speed'][posdf['pval'] < 0.05])
 
@@ -604,6 +638,7 @@ plt.ylabel('LFP differential R (DU)')
 plt.yticks([-1, -0.5, 0, 0.5, 1])
 plt.xticks([-0.5, -0.25, 0, 0.25])
 plt.legend(loc = 'upper right')
+plt.gca().set_box_aspect(1)
 
 #%%
 

@@ -37,11 +37,15 @@ ratecorrs = []
 ratepvals = []
 
 peak_above_mean = []
+peaktiming = []
 uponset = []
 allrates = []
 
 depthcorrs = []
 depthpvals = []
+
+timingcorrs = []
+timingpvals = [] 
 
 for s in datasets:
     print(s)
@@ -148,13 +152,15 @@ for s in datasets:
         depths_keeping_ex = []
         peaks_keeping_ex = []
         rates_keeping_ex = []
-                           
+        peaktiming_ex = []                   
             
         for i in range(len(ee.columns)):
             a = np.where(ee.iloc[:,i] > 0.5)
             if len(a[0]) > 0:
               peaks_keeping_ex.append(ee.iloc[:,i].max())
               peak_above_mean.append(ee.iloc[:,i].max())
+              peaktiming_ex.append(ee.iloc[:,i].idxmax())
+              peaktiming.append(ee.iloc[:,i].idxmax())
               depths_keeping_ex.append(depth.flatten()[ee.columns[i]])
               rates_keeping_ex.append(rates[i])
               allrates.append(rates[i])
@@ -224,7 +230,19 @@ for s in datasets:
     # plt.ylabel('UP onset delay (ms)')
     # plt.legend(loc = 'upper right')
 
+#%% 
 
+    timingcorr, timingp = kendalltau(peaktiming_ex, indexplot_ex)
+    timingcorrs.append(timingcorr)
+    timingpvals.append(timingp)
+
+    # plt.figure()
+    # plt.title('Timing of peak v/s UP onset delay_' + s)
+    # plt.scatter(peaktiming_ex,indexplot_ex, label = 'R = ' + str((round(timingcorr,2))))
+    # plt.xlabel('Timing of peak FR')
+    # plt.ylabel('UP onset delay (ms)')
+    # plt.legend(loc = 'upper right')
+    # plt.gca().set_box_aspect(1)
             
 #%% Pooled plot         
 
@@ -255,6 +273,7 @@ plt.plot(uponset, y_est + b, color = 'r')
 
 
 r1, p1 = kendalltau(allrates,uponset)
+r2, p2 = kendalltau(peaktiming, uponset)
 
 plt.figure()
 plt.rc('font', size = 15)
@@ -265,6 +284,17 @@ plt.xlabel('NREM FR (Hz)')
 plt.ylabel('UP onset delay (s)')
 plt.legend(loc = 'upper right')
 plt.gca().set_box_aspect(1)
+
+plt.figure()
+plt.rc('font', size = 15)
+plt.title('Timing of peak FR v/s UP onset: HDC pooled data')
+sns.kdeplot(x = peaktiming, y = uponset, color = 'cornflowerblue')
+plt.scatter(peaktiming, uponset, label = 'R = ' + str((round(r2,2))), color = 'cornflowerblue', s = 4)
+plt.xlabel('Timing of peak FR (Hz)')
+plt.ylabel('UP onset delay (s)')
+plt.legend(loc = 'upper right')
+plt.gca().set_box_aspect(1)
+
 
     
 #%% 

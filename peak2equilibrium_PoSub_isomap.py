@@ -35,6 +35,14 @@ uponset_hdc = []
 layers_all = []
 UD_onset = [] 
 alldepths = []
+peaktiming = []
+
+hdcells = []
+allcells = [] 
+
+range_uponset_hdc = []
+range_UDonset_hdc = []
+
 
 for s in datasets:
     print(s)
@@ -87,7 +95,10 @@ for s in datasets:
     for i in range(len(spikes)):
         if celltype['hd'][i] == 1 and celltype['gd'][i] == 1:
             hd.append(i)
-
+        
+    hdcells.append(len(hd))
+    allcells.append(len(spikes))
+    
 # ############################################################################################### 
 #     # LOAD UP AND DOWN STATE, NEW SWS AND NEW WAKE EPOCHS
 # ###############################################################################################   
@@ -126,8 +137,10 @@ for s in datasets:
     cc2 = nap.compute_eventcorrelogram(spikes, nap.Tsd(down_ep['start'].values), binsize = 0.005, windowsize = 0.255, ep = up_ep, norm = True)    
     dd2 = cc2[-0.25:0.25]
     tmp2 = pd.DataFrame(dd2)
-    tmp2 = tmp2.rolling(window=8, win_type='gaussian',center=True,min_periods=1).mean(std = 2)
+    tmp2 = tmp2.rolling(window = 8, win_type='gaussian',center=True,min_periods=1).mean(std = 2)
     ee2 = dd2[pyr]
+    
+    sess_UDonset = []         
 
     if len(ee2.columns) > 0:
         tmp = ee2.loc[0.005:] > 0.5
@@ -136,7 +149,7 @@ for s in datasets:
         ends = np.array([tmp.index[np.where(tmp[i])[0][0]] for i in tokeep])
         es = pd.Series(index = tokeep, data = ends)
         
-        tmp2 = ee2.loc[-0.1:-0.005] > 0.5
+        tmp2 = ee2.loc[-0.15:-0.005] > 0.5
     
         tokeep2 = tmp2.columns[tmp2.sum(0) > 0]
         start = np.array([tmp2.index[np.where(tmp2[i])[0][-1]] for i in tokeep2])
@@ -147,6 +160,7 @@ for s in datasets:
         stk = st[ix]
         
     for i in stk.index.values:
+        sess_UDonset.append(stk[i])
         UD_onset.append(stk[i])
     
 #%% 
@@ -164,8 +178,10 @@ for s in datasets:
         tokeep = []
         depths_keeping_ex = []
         peaks_keeping_ex = []
-                                  
-            
+        peaktiming_ex = []    
+
+        sess_uponset = []
+                    
         for i in range(len(ee.columns)):
             a = np.where(ee.iloc[:,i] > 0.5)
             if len(a[0]) > 0:
@@ -173,10 +189,16 @@ for s in datasets:
               peaks_keeping_ex.append(ee.iloc[:,i].max())
               alldepths.append(depth.flatten()[ee.columns[i]])
               peak_to_mean.append(ee.iloc[:,i].max())
+              peaktiming_ex.append(ee.iloc[:,i].idxmax())
+              peaktiming.append(ee.iloc[:,i].idxmax())
               layers_all.append((np.float64(layer[i])))
               res = ee.iloc[:,i].index[a]
+              sess_uponset.append(res[0])
               uponset_hdc.append(res[0])
               
+    range_uponset_hdc.append(np.std(sess_uponset))
+    range_UDonset_hdc.append(np.std(sess_UDonset))  
+    
     allPETH = pd.concat([allPETH, ee[tokeep]], axis = 1)
 
 #%% Isomap 
@@ -227,13 +249,31 @@ plt.ylabel('Isomap component 2')
 #%% Validation
 
 r, p = pearsonr(projection[:,0],peak_to_mean)
+r2, p2 = pearsonr(projection[:,1], peaktiming)
+r3, p3 = pearsonr(projection[:,1], uponset_hdc)
 
 plt.figure()
 plt.scatter(projection[:,0],peak_to_mean, label = 'r = ' + str(round(r,2)))
 plt.gca().set_box_aspect(1)
 plt.xlabel('Isomap component 1')
-plt.ylabel('Peak-maean rate ratio')
+plt.ylabel('Peak-mean rate ratio')
 plt.legend(loc = 'upper right')
+
+plt.figure()
+plt.scatter(projection[:,1],peaktiming, label = 'r = ' + str(round(r2,2)))
+plt.gca().set_box_aspect(1)
+plt.xlabel('Isomap component 2')
+plt.ylabel('Timing of peak FR')
+plt.legend(loc = 'upper right')
+
+plt.figure()
+plt.scatter(projection[:,1],uponset_hdc, label = 'r = ' + str(round(r3,2)))
+plt.gca().set_box_aspect(1)
+plt.xlabel('Isomap component 2')
+plt.ylabel('UP onset delay')
+plt.legend(loc = 'upper right')
+
+
               
 #%% Explained Variance 
 

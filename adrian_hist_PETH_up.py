@@ -32,6 +32,11 @@ allspeeds_up_ex = []
 pvals = []
 pvals_ex = []
 N_units = []
+N_ex = []
+N_hd = [] 
+
+range_DUonset = []
+allDU = []
 
 for s in datasets:
     print(s)
@@ -79,6 +84,8 @@ for s in datasets:
         if celltype['hd'][i] == 1 and celltype['gd'][i] == 1:
             hd.append(i)
 
+    N_ex.append(len(pyr))
+    N_hd.append(len(hd))
 # ############################################################################################### 
 #     # LOAD UP AND DOWN STATE, NEW SWS AND NEW WAKE EPOCHS
 # ###############################################################################################   
@@ -122,6 +129,8 @@ for s in datasets:
     ep_U = nts.IntervalSet(start = up_ep.start[0], end = up_ep.end.values[-1])
                   
     rates = []
+    
+    sess_DU = []
                
     for i in neurons:
         # spk2 = spikes[i].restrict(ep_U).as_units('ms').index.values
@@ -144,33 +153,33 @@ for s in datasets:
     ff = dd[interneuron]
        
 #######All cells 
-    if len(dd.columns) > 0:
-        indexplot = []
-        depths_keeping = []
+#     if len(dd.columns) > 0:
+#         indexplot = []
+#         depths_keeping = []
         
-    for i in range(len(dd.columns)):
-        a = np.where(dd.iloc[:,i] > 0.5)
+#     for i in range(len(dd.columns)):
+#         a = np.where(dd.iloc[:,i] > 0.5)
             
-        if len(a[0]) > 0:
-            depths_keeping.append(depth.flatten()[dd.columns[i]])
-            res = dd.iloc[:,i].index[a]
-            indexplot.append(res[0])
+#         if len(a[0]) > 0:
+#             depths_keeping.append(depth.flatten()[dd.columns[i]])
+#             res = dd.iloc[:,i].index[a]
+#             indexplot.append(res[0])
            
-    coef, p = kendalltau(indexplot,depths_keeping)
-    pvals.append(p)
-    allcoefs_up.append(coef)
+#     coef, p = kendalltau(indexplot,depths_keeping)
+#     pvals.append(p)
+#     allcoefs_up.append(coef)
     
-####ALL CELLS SPEED
+# ####ALL CELLS SPEED
 
     
     
 
-    y_est = np.zeros(len(indexplot))
-    m, b = np.polyfit(indexplot, depths_keeping, 1)
-    allspeeds_up.append(m)
+#     y_est = np.zeros(len(indexplot))
+#     m, b = np.polyfit(indexplot, depths_keeping, 1)
+#     allspeeds_up.append(m)
         
-    for i in range(len(indexplot)):
-        y_est[i] = m*indexplot[i]
+#     for i in range(len(indexplot)):
+#         y_est[i] = m*indexplot[i]
         
         
 #######Ex cells 
@@ -186,7 +195,12 @@ for s in datasets:
                 depths_keeping_ex.append(depth.flatten()[ee.columns[i]])
                 res = ee.iloc[:,i].index[a]
                 indexplot_ex.append(res[0])
+                allDU.append(res[0])
             
+        sess_DU.append(indexplot_ex)
+        
+        
+        range_DUonset.append(np.std(sess_DU))
         
         #Latency v/s depth 
         coef_ex, p_ex = kendalltau(indexplot_ex,depths_keeping_ex)

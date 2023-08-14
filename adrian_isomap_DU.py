@@ -11,6 +11,7 @@ import pandas as pd
 import scipy.io
 import pynapple as nap 
 import os, sys
+import matplotlib
 import matplotlib.pyplot as plt 
 from random import sample, choice, uniform
 from math import sin, cos
@@ -650,8 +651,4 @@ for s in datasets:
         bins = np.linspace(-np.pi, np.pi, 20)
         plt.figure()
         plt.hist(np.minimum((2*np.pi - abs(angles['DU']-angles['UD'])),abs(angles['DU']-angles['UD']) ), bins)
-        
-    
-    
-    
         

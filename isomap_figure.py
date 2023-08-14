@@ -10,6 +10,7 @@ import pandas as pd
 import scipy.io
 import pynapple as nap 
 import os, sys
+import matplotlib
 import matplotlib.pyplot as plt 
 from matplotlib.colors import hsv_to_rgb
 import scipy.signal
@@ -207,15 +208,29 @@ for s in datasets:
     # cmap = plt.colormaps['Greys']
     cmap = plt.colormaps['copper']
     
-    examples = [70, 741,  926]  
-    # [70, 470, 592, 691, 741, 821, 828, 926]  
+    examples = [470, 741, 991]  
+    # [ 470KEEP, 741KEEP, 950 ]  
     # goodeps = []
+    
+    
+    tuning_curves = nap.compute_1d_tuning_curves(group=spikes[hd], 
+                                                 feature=position['ang'],                                              
+                                                 nb_bins=31, 
+                                                 minmax=(0, 2*np.pi))
+    
+    pref_ang = []
+     
+    for i in tuning_curves.columns:
+       pref_ang.append(tuning_curves.loc[:,i].idxmax())
+
+    norm = plt.Normalize()        
+    color = plt.cm.hsv(norm([i/(2*np.pi) for i in pref_ang]))
     
     plt.figure(figsize = (8,8))
     plt.scatter(p_wake[:,0], p_wake[:,1], c = RGB, zorder = 2)
     # plt.scatter(p_sleep[:,0], p_sleep[:,1], c = 'silver') 
     
-    for k in  examples: #goodeps[91:100]: #range(len(du)): #examples:
+    for k in examples: #goodeps[91:100]: #range(len(du)): #examples:
         traj = projection.restrict(nap.IntervalSet(start = du.loc[[k]]['start'], 
                                                    end = du.loc[[k]]['end']))
         traj.index = traj.index.values - (du.loc[[k]]['start'].values + 0.25)
@@ -241,6 +256,7 @@ for s in datasets:
             dy = np.diff(traj['y'][0:0.15].values)
             
             # plt.figure(figsize = (8,8))
+            # plt.subplot(121)
             # plt.scatter(p_wake[:,0], p_wake[:,1], c = RGB, zorder = 2)
             # plt.scatter(p_sleep[:,0], p_sleep[:,1], c = 'silver') 
             
@@ -252,4 +268,35 @@ for s in datasets:
                 plt.arrow(traj['x'][0:0.15].iloc[i], traj['y'][0:0.15].iloc[i],
                       dx[i], dy[i], color = cmap(col)[i],
                       head_width = 0.1, head_length = 0.1, linewidth = 4, zorder = 5)
-            
+                
+            # plt.subplot(122)
+            # for i,n in enumerate(spikes[hd].keys()):
+            #     # plt.plot(spikes[hd][n].restrict(du.loc[[k]]).fillna(pref_ang[i]), '|',color = color[i])
+            #     plt.plot(spikes[n].restrict(du.loc[[k]]).fillna(pref_ang[i]), '|',color = 'k')
+            #     plt.axvline(du.loc[[k]]['start'][0] + 0.25, color = 'r')
+         
+
+
+#%% Circular colorbar 
+
+fg = plt.figure(figsize=(8,8))
+ax = fg.add_axes([0.1,0.1,0.8,0.8], projection='polar')
+
+# Define colormap normalization for 0 to 2*pi
+norm = matplotlib.colors.Normalize(0, 2*np.pi) 
+
+# Plot a color mesh on the polar plot
+# with the color set by the angle
+
+n = 200  #the number of secants for the mesh
+t = np.linspace(0,2*np.pi,n)   #theta values
+r = np.linspace(.8,1,2)        #radius values change 0.6 to 0 for full circle
+rg, tg = np.meshgrid(r,t)      #create a r,theta meshgrid
+c = tg                         #define color values as theta value
+im = ax.pcolormesh(t, r, c.T,norm=norm, cmap = plt.cm.hsv)  #plot the colormesh on axis with colormap
+ax.set_yticklabels([])                   #turn of radial tick labels (yticks)
+ax.tick_params(pad=15,labelsize=24)      #cosmetic changes to tick labels
+ax.spines['polar'].set_visible(False)    #turn off the axis spine.
+    
+    
+        

@@ -32,6 +32,13 @@ pmeans = []
 diff = []
 sess = []
 
+allends = []
+allstarts = []
+dends = []
+dstart = []
+vends = []
+vstart = []
+
 meanupdur = [] 
 meandowndur = []
 CVup = []
@@ -193,11 +200,14 @@ for s in datasets:
     # ep_D = nts.IntervalSet(start = down_ep.start[0], end = down_ep.end.values[-1])
     rates = []
     
+    ddur = []
+    vdur = []
+    
     for i in neurons:
         spk2 = mua[i].restrict(up_ep).as_units('ms').index.values
         tmp = crossCorr(tsd_dn, spk2, binsize, nbins)
         tmp = pd.DataFrame(tmp)
-        tmp = tmp.rolling(window=4, win_type='gaussian',center=True,min_periods=1).mean(std = 2)
+        tmp = tmp.rolling(window=8, win_type='gaussian',center=True,min_periods=1).mean(std = 2)
         
         fr = len(spk2)/up_ep.tot_length('s')
         rates.append(fr)
@@ -205,36 +215,26 @@ for s in datasets:
         cc[i] = tmp.values/fr
        
         dd = cc[-250:250]
+           
+        tmp = dd[i].loc[5:] > 0.2 #np.percentile(dd[i].values,20)
+        ends = tmp.where(tmp == True).first_valid_index()
+        allends.append(ends)
         
-    if len(dd.columns) > 0:
-        tmp = dd.loc[5:] >  0.2 #np.percentile(dd.values,20) 
+        tmp2 = dd[i].loc[-150:-5] > 0.2 #np.percentile(dd[i].values,20)  
+        start = tmp2.where(tmp2 == True).last_valid_index()
+        allstarts.append(start)
         
-        
-        tokeep = tmp.columns[tmp.sum(0) > 0]
-        ends = np.array([tmp.index[np.where(tmp[j])[0][0]] for j in tokeep])
-        es = pd.Series(index = tokeep, data = ends)
-        
-        tmp2 = dd.loc[-100:-5] > 0.2 #np.percentile(dd.values,20)  
-
-        tokeep2 = tmp2.columns[tmp2.sum(0) > 0]
-        start = np.array([tmp2.index[np.where(tmp2[k])[0][-1]] for k in tokeep2])
-        st = pd.Series(index = tokeep2, data = start)
-            
-        ix = np.intersect1d(tokeep,tokeep2)
-        ix = [int(m) for m in ix]
-        
-        
-        depths_keeping = depth[ix]
-        stk = st[ix]
-
-        dur = np.zeros(len(ix))
-        for i,n in enumerate(ix):
-                dur[i] = es[ix][n] - st[ix][n]
-        
-        if dur[0] > 10 and dur[1] > 10:
-            sess.append(s)
-            dur_D.append(dur[0])
-            dur_V.append(dur[1])
+        if i == 0: 
+            ddur.append(ends - start)
+            dends.append(ends)
+            dstart.append(start)
+        else: 
+            vdur.append(ends - start)
+            vends.append(ends)
+            vstart.append(start)
+               
+    dur_D.append(ddur[0])
+    dur_V.append(vdur[0])
           
 
         

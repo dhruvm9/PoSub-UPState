@@ -112,82 +112,82 @@ for s in datasets:
         tmp = tmp.reshape(len(tmp)//2,2)/1000
         sws_ep1 = nts.IntervalSet(start = tmp[:,0], end = tmp[:,1], time_units = 's')
         
-    sws_ep = newsleep_ep.intersect(sws_ep1)
+    new_sws_ep = newsleep_ep.intersect(sws_ep1)
 
     
 ############################################################################################### 
     # THETA/DELTA RATIO FOR SWS
 ###############################################################################################   
     
-    new_sws_start = []
-    new_sws_end = []
-    ratio_sws = []
-    ratio_wake = [] 
+    # new_sws_start = []
+    # new_sws_end = []
+    # ratio_sws = []
+    # ratio_wake = [] 
 
-    for i in sws_ep.index:  
-        sws_lfp = lfp.restrict(sws_ep.loc[[i]])
+    # for i in sws_ep.index:  
+    #     sws_lfp = lfp.restrict(sws_ep.loc[[i]])
     
-        lfp_filt_theta = nts.Tsd(sws_lfp.index.values, butter_bandpass_filter(sws_lfp, 4, 12, 1250/5, 2))
-        power_theta = nts.Tsd(lfp_filt_theta.index.values, np.abs(lfp_filt_theta.values))
-        power_theta = power_theta.rolling(window=1000,win_type='gaussian',center=True,min_periods=1).mean(std=80)
+    #     lfp_filt_theta = nts.Tsd(sws_lfp.index.values, butter_bandpass_filter(sws_lfp, 4, 12, 1250/5, 2))
+    #     power_theta = nts.Tsd(lfp_filt_theta.index.values, np.abs(lfp_filt_theta.values))
+    #     power_theta = power_theta.rolling(window=1000,win_type='gaussian',center=True,min_periods=1).mean(std=80)
 
-        lfp_filt_delta = nts.Tsd(sws_lfp.index.values, butter_bandpass_filter(sws_lfp, 0.5, 4, 1250/5, 2))
-        power_delta = nts.Tsd(lfp_filt_delta.index.values, np.abs(lfp_filt_delta.values))
-        power_delta = power_delta.rolling(window=1000,win_type='gaussian',center=True,min_periods=1).mean(std=80)
+    #     lfp_filt_delta = nts.Tsd(sws_lfp.index.values, butter_bandpass_filter(sws_lfp, 0.5, 4, 1250/5, 2))
+    #     power_delta = nts.Tsd(lfp_filt_delta.index.values, np.abs(lfp_filt_delta.values))
+    #     power_delta = power_delta.rolling(window=1000,win_type='gaussian',center=True,min_periods=1).mean(std=80)
     
     
-        ratio = nts.Tsd(t = power_theta.index.values, d = np.log(power_theta.values/power_delta.values))
-        ratio2 = ratio.rolling(window=10000,win_type='gaussian',center=True,min_periods=1).mean(std=200)
-        ratio2 = ratio2.mean()
+    #     ratio = nts.Tsd(t = power_theta.index.values, d = np.log(power_theta.values/power_delta.values))
+    #     ratio2 = ratio.rolling(window=10000,win_type='gaussian',center=True,min_periods=1).mean(std=200)
+    #     ratio2 = ratio2.mean()
 
-        if ratio2 < 0:
-            new_sws_start.append(sws_ep.iloc[i].start)
-            new_sws_end.append(sws_ep.iloc[i].end)
-            ratio_sws.append(ratio2)
+    #     if ratio2 < 0:
+    #         new_sws_start.append(sws_ep.iloc[i].start)
+    #         new_sws_end.append(sws_ep.iloc[i].end)
+    #         ratio_sws.append(ratio2)
     
-    new_sws_ep = nts.IntervalSet(start = new_sws_start, end = new_sws_end)
-    mean_ratio_sws = np.mean(ratio_sws)
+    # new_sws_ep = nts.IntervalSet(start = new_sws_start, end = new_sws_end)
+    # mean_ratio_sws = np.mean(ratio_sws)
     
 ############################################################################################### 
     # REFINE WAKE 
 ###############################################################################################      
 
-    vl = acceleration[0].restrict(wake_ep)
-    vl = vl.as_series().diff().abs().dropna() 
+    # vl = acceleration[0].restrict(wake_ep)
+    # vl = vl.as_series().diff().abs().dropna() 
     
-    a, _ = scipy.signal.find_peaks(vl, 0.025)
-    peaks = nts.Tsd(vl.iloc[a])
-    duration = np.diff(peaks.as_units('s').index.values)
-    interval = nts.IntervalSet(start = peaks.index.values[0:-1], end = peaks.index.values[1:])
+    # a, _ = scipy.signal.find_peaks(vl, 0.025)
+    # peaks = nts.Tsd(vl.iloc[a])
+    # duration = np.diff(peaks.as_units('s').index.values)
+    # interval = nts.IntervalSet(start = peaks.index.values[0:-1], end = peaks.index.values[1:])
 
-    rest_ep = interval.iloc[duration>15.0]
-    rest_ep = rest_ep.reset_index(drop=True)
-    rest_ep = rest_ep.merge_close_intervals(100000, time_units ='us')
+    # rest_ep = interval.iloc[duration>15.0]
+    # rest_ep = rest_ep.reset_index(drop=True)
+    # rest_ep = rest_ep.merge_close_intervals(100000, time_units ='us')
 
-    new_wake_ep = wake_ep.set_diff(rest_ep)
+    # new_wake_ep = wake_ep.set_diff(rest_ep)
     
 ############################################################################################### 
     # THETA/DELTA RATIO FOR WAKE
 ###############################################################################################  
-    for i in new_wake_ep.index: 
+    # for i in new_wake_ep.index: 
 
-        wake_lfp = lfp.restrict(new_wake_ep.loc[[i]])
+    #     wake_lfp = lfp.restrict(new_wake_ep.loc[[i]])
 
-        lfp_filt_theta = nts.Tsd(wake_lfp.index.values, butter_bandpass_filter(wake_lfp, 4, 12, 1250/5, 2))
-        power_theta = nts.Tsd(lfp_filt_theta.index.values, np.abs(lfp_filt_theta.values))
-        power_theta = power_theta.rolling(window=1000,win_type='gaussian',center=True,min_periods=1).mean(std=80)
+    #     lfp_filt_theta = nts.Tsd(wake_lfp.index.values, butter_bandpass_filter(wake_lfp, 4, 12, 1250/5, 2))
+    #     power_theta = nts.Tsd(lfp_filt_theta.index.values, np.abs(lfp_filt_theta.values))
+    #     power_theta = power_theta.rolling(window=1000,win_type='gaussian',center=True,min_periods=1).mean(std=80)
     
-        lfp_filt_delta = nts.Tsd(wake_lfp.index.values, butter_bandpass_filter(wake_lfp, 0.5, 4, 1250/5, 2))
-        power_delta = nts.Tsd(lfp_filt_delta.index.values, np.abs(lfp_filt_delta.values))
-        power_delta = power_delta.rolling(window=1000,win_type='gaussian',center=True,min_periods=1).mean(std=80)
+    #     lfp_filt_delta = nts.Tsd(wake_lfp.index.values, butter_bandpass_filter(wake_lfp, 0.5, 4, 1250/5, 2))
+    #     power_delta = nts.Tsd(lfp_filt_delta.index.values, np.abs(lfp_filt_delta.values))
+    #     power_delta = power_delta.rolling(window=1000,win_type='gaussian',center=True,min_periods=1).mean(std=80)
     
-        ratio = nts.Tsd(t = power_theta.index.values, d = np.log(power_theta.values/power_delta.values))
-        ratio2 = ratio.rolling(window=10000,win_type='gaussian',center=True,min_periods=1).mean(std=200)
-        ratio2 = ratio2.mean()
+    #     ratio = nts.Tsd(t = power_theta.index.values, d = np.log(power_theta.values/power_delta.values))
+    #     ratio2 = ratio.rolling(window=10000,win_type='gaussian',center=True,min_periods=1).mean(std=200)
+    #     ratio2 = ratio2.mean()
 
-        ratio_wake.append(ratio2) 
+    #     ratio_wake.append(ratio2) 
         
-    mean_ratio_wake = np.mean(ratio_wake)
+    # mean_ratio_wake = np.mean(ratio_wake)
     
     
 ############################################################################################### 
@@ -262,7 +262,12 @@ for s in datasets:
         rates.append(pd.Series(index = bins[0:-1] + np.diff(bins)/2, data = r))
     rates = pd.concat(rates)
     total2 = rates.rolling(window=100,win_type='gaussian',center=True,min_periods=1, axis = 0).mean(std=2)
-    idx = total2[total2<np.percentile(total2,20)].index.values   
+    
+    
+    # idx = total2[total2<np.percentile(total2,20)].index.values   
+    # idx = total2[total2<np.percentile(total2,30)].index.values   
+    idx = total2[total2<np.percentile(total2,10)].index.values   
+    
     tmp2 = [[idx[0]]]
     
     for i in range(1,len(idx)):
@@ -271,14 +276,14 @@ for s in datasets:
         elif (idx[i] - idx[i-1]) == bin_size:
             tmp2[-1].append(idx[i])
 
-    idx3 = total2[total2>np.percentile(total2,20)].index.values   
-    tmp3 = [[idx3[0]]]
+    # idx3 = total2[total2>np.percentile(total2,20)].index.values   
+    # tmp3 = [[idx3[0]]]
     
-    for i in range(1,len(idx3)):
-        if (idx3[i] - idx3[i-1]) > bin_size:
-            tmp3.append([idx3[i]])
-        elif (idx3[i] - idx3[i-1]) == bin_size:
-            tmp3[-1].append(idx3[i])
+    # for i in range(1,len(idx3)):
+    #     if (idx3[i] - idx3[i-1]) > bin_size:
+    #         tmp3.append([idx3[i]])
+    #     elif (idx3[i] - idx3[i-1]) == bin_size:
+    #         tmp3[-1].append(idx3[i])
 
     
     
@@ -299,53 +304,53 @@ for s in datasets:
     up_ep = new_sws_ep.intersect(up_ep)
     
     
-    down_dur = down_ep.tot_length('s') / new_sws_ep.tot_length('s') 
-    all_down_dur.append(down_dur)
+    # down_dur = down_ep.tot_length('s') / new_sws_ep.tot_length('s') 
+    # all_down_dur.append(down_dur)
     
     #wake using same threshold 
-    threshold = np.percentile(total2,20)
+    # threshold = np.percentile(total2,20)
     
-    bin_size = 10000 #us
-    rates = []
+    # bin_size = 10000 #us
+    # rates = []
 
-    for e in new_wake_ep.index:
-        ep = new_wake_ep.loc[[e]]
-        bins = np.arange(ep.iloc[0,0], ep.iloc[0,1], bin_size)       
-        r = np.zeros((len(bins)-1))
+    # for e in new_wake_ep.index:
+    #     ep = new_wake_ep.loc[[e]]
+    #     bins = np.arange(ep.iloc[0,0], ep.iloc[0,1], bin_size)       
+    #     r = np.zeros((len(bins)-1))
         
-        for n in spikes.keys(): 
-            tmp = np.histogram(spikes[n].restrict(ep).index.values, bins)[0]
-            r = r + tmp
-        rates.append(pd.Series(index = bins[0:-1] + np.diff(bins)/2, data = r))
-    rates = pd.concat(rates)
-    total2 = rates.rolling(window=100,win_type='gaussian',center=True,min_periods=1, axis = 0).mean(std=2)
-    idx = total2[total2<threshold].index.values
+    #     for n in spikes.keys(): 
+    #         tmp = np.histogram(spikes[n].restrict(ep).index.values, bins)[0]
+    #         r = r + tmp
+    #     rates.append(pd.Series(index = bins[0:-1] + np.diff(bins)/2, data = r))
+    # rates = pd.concat(rates)
+    # total2 = rates.rolling(window=100,win_type='gaussian',center=True,min_periods=1, axis = 0).mean(std=2)
+    # idx = total2[total2<threshold].index.values
     
-    if idx.size > 0:
-        tmp2 = [[idx[0]]]
+    # if idx.size > 0:
+    #     tmp2 = [[idx[0]]]
     
-        for i in range(1,len(idx)):
-            if (idx[i] - idx[i-1]) > bin_size:
-                tmp2.append([idx[i]])
-            elif (idx[i] - idx[i-1]) == bin_size:
-                    tmp2[-1].append(idx[i])
+    #     for i in range(1,len(idx)):
+    #         if (idx[i] - idx[i-1]) > bin_size:
+    #             tmp2.append([idx[i]])
+    #         elif (idx[i] - idx[i-1]) == bin_size:
+    #                 tmp2[-1].append(idx[i])
  
-        down_wake_ep = np.array([[e[0],e[-1]] for e in tmp2 if len(e) > 1])
-        down_wake_ep = nts.IntervalSet(start = down_wake_ep[:,0], end = down_wake_ep[:,1])
-        down_wake_ep = down_wake_ep.drop_short_intervals(bin_size)
-        down_wake_ep = down_wake_ep.reset_index(drop=True)
-        down_wake_ep = down_wake_ep.merge_close_intervals(bin_size*2)
-        down_wake_ep = down_wake_ep.drop_short_intervals(bin_size*3)
-        down_wake_ep = down_wake_ep.drop_long_intervals(bin_size*50)
+    #     down_wake_ep = np.array([[e[0],e[-1]] for e in tmp2 if len(e) > 1])
+    #     down_wake_ep = nts.IntervalSet(start = down_wake_ep[:,0], end = down_wake_ep[:,1])
+    #     down_wake_ep = down_wake_ep.drop_short_intervals(bin_size)
+    #     down_wake_ep = down_wake_ep.reset_index(drop=True)
+    #     down_wake_ep = down_wake_ep.merge_close_intervals(bin_size*2)
+    #     down_wake_ep = down_wake_ep.drop_short_intervals(bin_size*3)
+    #     down_wake_ep = down_wake_ep.drop_long_intervals(bin_size*50)
    
         
-        down_wake_dur = down_wake_ep.tot_length('s') / new_wake_ep.tot_length('s')
-        all_down_wake_dur.append(down_wake_dur)
+    #     down_wake_dur = down_wake_ep.tot_length('s') / new_wake_ep.tot_length('s')
+    #     all_down_wake_dur.append(down_wake_dur)
         
-    else: 
-        print('No down states detected during wake!')
-        down_wake_dur = 0
-        all_down_wake_dur.append(down_wake_dur)
+    # else: 
+    #     print('No down states detected during wake!')
+    #     down_wake_dur = 0
+    #     all_down_wake_dur.append(down_wake_dur)
 ############################################################################################### 
     # WRITING FOR NEUROSCOPE
 ############################################################################################### 
@@ -361,7 +366,10 @@ for s in datasets:
                               (np.repeat(np.array(['PyDown stop 1']), n))
                               )).T.flatten()
 
-    evt_file = rawpath + '/' + name + '.evt.py.dow'
+    # evt_file = rawpath + '/' + name + '.evt.py.dow'
+    # evt_file = rawpath + '/' + name + '.evt.py.d3w'
+    evt_file = rawpath + '/' + name + '.evt.py.d1w'
+    
     f = open(evt_file, 'w')
     for t, n in zip(datatowrite, texttowrite):
         f.writelines("{:1.6f}".format(t) + "\t" + n + "\n")
@@ -378,7 +386,11 @@ for s in datasets:
                               (np.repeat(np.array(['PyUp stop 1']), n))
                               )).T.flatten()
 
-    evt_file = rawpath + '/' + name + '.evt.py.upp'
+    # evt_file = rawpath + '/' + name + '.evt.py.upp'
+    # evt_file = rawpath + '/' + name + '.evt.py.u3p'
+    evt_file = rawpath + '/' + name + '.evt.py.u1p'
+    
+    
     f = open(evt_file, 'w')
     for t, n in zip(datatowrite, texttowrite):
         f.writelines("{:1.6f}".format(t) + "\t" + n + "\n")
@@ -388,21 +400,21 @@ for s in datasets:
     # DOWN STATE DURATIONS FOR SLEEP AND WAKE
 ############################################################################################### 
 
-durs = np.zeros((len(all_down_dur), 2))
-durs[:, 0] = all_down_dur
-durs[:, 1] = all_down_wake_dur
-durations = pd.DataFrame(data=durs, columns=['Sleep', 'Wake'])
+# durs = np.zeros((len(all_down_dur), 2))
+# durs[:, 0] = all_down_dur
+# durs[:, 1] = all_down_wake_dur
+# durations = pd.DataFrame(data=durs, columns=['Sleep', 'Wake'])
 
-w, p = wilcoxon(durations['Sleep'],durations['Wake'])
+# w, p = wilcoxon(durations['Sleep'],durations['Wake'])
 
-x1 = ['Sleep'] * len(all_down_dur)
-x2 = ['Wake'] * len(all_down_dur)
+# x1 = ['Sleep'] * len(all_down_dur)
+# x2 = ['Wake'] * len(all_down_dur)
 
-plt.figure()
-for i in range(len(x1)):     plt.plot([x1[i],x2[i]], [durations['Sleep'][i],durations['Wake'][i]],color='k', marker='o')
-plt.title('Down state detection quality')
-plt.ylabel('Fraction of epoch')
-plt.show()
+# plt.figure()
+# for i in range(len(x1)):     plt.plot([x1[i],x2[i]], [durations['Sleep'][i],durations['Wake'][i]],color='k', marker='o')
+# plt.title('Down state detection quality')
+# plt.ylabel('Fraction of epoch')
+# plt.show()
 
 
 #%%

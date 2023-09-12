@@ -66,8 +66,8 @@ def MorletWavelet(f, ncyc, si):
 
 #%%
    
-data_directory = '/media/adrien/LaCie/PoSub-UPState/Data/###AllPoSub'
-rwpath = '/media/adrien/LaCie/PoSub-UPState/Project/Data'
+data_directory = '/media/dhruv/LaCie/PoSub-UPState/Data/###AllPoSub'
+rwpath = '/media/dhruv/LaCie/PoSub-UPState/Project/Data'
 datasets = np.genfromtxt(os.path.join(data_directory,'dataset_Hor_DM.list'), delimiter = '\n', dtype = str, comments = '#')
 
 all_pspec_z = pd.DataFrame()

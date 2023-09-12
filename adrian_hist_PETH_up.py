@@ -91,13 +91,19 @@ for s in datasets:
 # ###############################################################################################   
 
     
-    file = os.path.join(rawpath, name +'.evt.py.dow')
+    # file = os.path.join(rawpath, name +'.evt.py.dow')
+    # file = os.path.join(rawpath, name +'.evt.py.d3w')
+    file = os.path.join(rawpath, name +'.evt.py.d1w')
+    
     if os.path.exists(file):
         tmp = np.genfromtxt(file)[:,0]
         tmp = tmp.reshape(len(tmp)//2,2)/1000
         down_ep = nts.IntervalSet(start = tmp[:,0], end = tmp[:,1], time_units = 's')
     
-    file = os.path.join(rawpath, name +'.evt.py.upp')
+    # file = os.path.join(rawpath, name +'.evt.py.upp')
+    # file = os.path.join(rawpath, name +'.evt.py.u3p')
+    file = os.path.join(rawpath, name +'.evt.py.u1p')
+    
     if os.path.exists(file):
         tmp = np.genfromtxt(file)[:,0]
         tmp = tmp.reshape(len(tmp)//2,2)/1000

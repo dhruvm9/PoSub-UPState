@@ -23,8 +23,10 @@ data_directory = '/media/dhruv/LaCie1/A7800'
 datasets = np.genfromtxt(os.path.join(data_directory,'dataset_DM.list'), delimiter = '\n', dtype = str, comments = '#')
 
 allPETH = pd.DataFrame()
-peak_to_mean = []
+peak_above_mean = []
 uponset_rsc = []
+corrs = []
+pvals = []
 
 for s in datasets:
     print(s)
@@ -59,10 +61,10 @@ for s in datasets:
 ###############################################################################################  
       
 ## Peak firing       
-    cc2 = nap.compute_eventcorrelogram(spikes, nap.Tsd(up_ep['start'].values), binsize = 0.005, windowsize = 0.255, ep = new_sws_ep, norm = True)
+    cc2 = nap.compute_eventcorrelogram(spikes, nap.Tsd(up_ep['start'].values), binsize = 0.005, windowsize = 0.255, ep = up_ep, norm = True)
     tmp = pd.DataFrame(cc2)
-    tmp = tmp.rolling(window=4, win_type='gaussian',center=True,min_periods=1).mean(std = 2)
-    dd2 = tmp[0:0.105]
+    tmp = tmp.rolling(window=8, win_type='gaussian',center=True,min_periods=1).mean(std = 2)
+    dd2 = tmp[0:0.155]
     
     if len(dd2.columns) > 0:
                     
@@ -77,7 +79,7 @@ for s in datasets:
                 peak_above_mean.append(dd2.iloc[:,i].max())
                 res = dd2.iloc[:,i].index[a]
                 indexplot.append(res[0])
-                uponset.append(res[0])
+                uponset_rsc.append(res[0])
 
     corr, p = kendalltau(indexplot, peaks_keeping)
     corrs.append(corr)
@@ -93,24 +95,36 @@ for s in datasets:
 
 #%% Pooled plot         
 
-pooledcorr, pooledp = kendalltau(uponset, peak_above_mean)
+binsize = 0.005
+pooledcorr, pooledp = kendalltau(uponset_rsc, peak_above_mean)
 
-(counts,onsetbins,peakbins) = np.histogram2d(uponset,peak_above_mean,bins=[30,30],
-                                                 range=[[0,0.105],[0.5,3.6]])
+(counts,onsetbins,peakbins) = np.histogram2d(uponset_rsc,peak_above_mean,bins = [len(np.arange(0,0.155,binsize))+1,len(np.arange(0,0.155,binsize))+1],
+                                                 range=[[-0.0025,0.1575],[0.5,3.6]])
+
+masked_array = np.ma.masked_where(counts == 0, counts)
+cmap = plt.cm.viridis  # Can be any colormap that you want after the cm
+cmap.set_bad(color='white')
 
 plt.figure()
-plt.imshow(counts.T, origin='lower', extent = [onsetbins[0],onsetbins[-1],peakbins[0],peakbins[-1]],
-                                               aspect='auto')
-plt.colorbar()
-plt.xlabel('Time from UP onset (s)')
-plt.ylabel('Peak/mean FR')
+plt.imshow(masked_array.T, origin='lower', extent = [onsetbins[0],onsetbins[-1],peakbins[0],peakbins[-1]],
+                                               aspect='auto', cmap = cmap)
+plt.colorbar(ticks = [min(counts.flatten()),max(counts.flatten())])
+plt.xlabel('UP onset delay (s)')
+plt.ylabel('Peak-mean rate ratio')
+plt.gca().set_box_aspect(1)
 
+y_est = np.zeros(len(uponset_rsc))
+m, b = np.polyfit(uponset_rsc, peak_above_mean, 1)
+for i in range(len(uponset_rsc)):
+     y_est[i] = m*uponset_rsc[i]
+
+plt.plot(uponset_rsc, y_est + b, color = 'r')
 
 plt.figure()
 plt.rc('font', size = 15)
-plt.title('Peak/ mean FR v/s UP onset: MEC pooled data')
-sns.kdeplot(x = uponset, y = peak_above_mean, color = 'cornflowerblue')
-plt.scatter(uponset, peak_above_mean, label = 'R = ' + str((round(pooledcorr,2))), color = 'cornflowerblue', s = 4)
+plt.title('Peak/ mean FR v/s UP onset: RSC pooled data')
+sns.kdeplot(x = uponset_rsc, y = peak_above_mean, color = 'cornflowerblue')
+plt.scatter(uponset_rsc, peak_above_mean, label = 'R = ' + str((round(pooledcorr,2))), color = 'cornflowerblue', s = 4)
 plt.xlabel('Time from UP onset (s)')
 plt.ylabel('Peak/mean FR')
 plt.legend(loc = 'upper right')

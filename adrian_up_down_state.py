@@ -18,10 +18,14 @@ from Wavelets import MyMorlet as Morlet
 import seaborn as sns
 from scipy.stats import wilcoxon
 
-data_directory = '/media/DataDhruv/Dropbox (Peyrache Lab)/Peyrache Lab Team Folder/Data/AdrianPoSub/###AllPoSub'
-datasets = np.genfromtxt(os.path.join(data_directory,'dataset_Hor_DM.list'), delimiter = '\n', dtype = str, comments = '#')
+# data_directory = '/media/DataDhruv/Dropbox (Peyrache Lab)/Peyrache Lab Team Folder/Data/AdrianPoSub/###AllPoSub'
+# datasets = np.genfromtxt(os.path.join(data_directory,'dataset_Hor_DM.list'), delimiter = '\n', dtype = str, comments = '#')
 #datasets = np.loadtxt(os.path.join(data_directory,'dataset_test.list'), delimiter = '\n', dtype = str, comments = '#')
-rwpath = '/media/DataDhruv/Dropbox (Peyrache Lab)/Peyrache Lab Team Folder/Projects/PoSub-UPstate/Data'
+# rwpath = '/media/DataDhruv/Dropbox (Peyrache Lab)/Peyrache Lab Team Folder/Projects/PoSub-UPstate/Data'
+
+data_directory = '/media/DataDhruv/Dropbox (Peyrache Lab)/Peyrache Lab Team Folder/Data/AdrianPoSub/Dataset_Ver'
+datasets = np.genfromtxt(os.path.join(data_directory,'dataset_Ver.list'), delimiter = '\n', dtype = str, comments = '#')
+rwpath = data_directory
 
 all_down_dur = []
 all_down_wake_dur = []
@@ -129,16 +133,16 @@ for s in datasets:
     
     #     lfp_filt_theta = nts.Tsd(sws_lfp.index.values, butter_bandpass_filter(sws_lfp, 4, 12, 1250/5, 2))
     #     power_theta = nts.Tsd(lfp_filt_theta.index.values, np.abs(lfp_filt_theta.values))
-    #     power_theta = power_theta.rolling(window=1000,win_type='gaussian',center=True,min_periods=1).mean(std=80)
+    #     power_theta = pd.DataFrame(power_theta).rolling(window=1000,win_type='gaussian',center=True,min_periods=1).mean(std=80)
 
     #     lfp_filt_delta = nts.Tsd(sws_lfp.index.values, butter_bandpass_filter(sws_lfp, 0.5, 4, 1250/5, 2))
     #     power_delta = nts.Tsd(lfp_filt_delta.index.values, np.abs(lfp_filt_delta.values))
-    #     power_delta = power_delta.rolling(window=1000,win_type='gaussian',center=True,min_periods=1).mean(std=80)
+    #     power_delta = pd.DataFrame(power_delta).rolling(window=1000,win_type='gaussian',center=True,min_periods=1).mean(std=80)
     
     
-    #     ratio = nts.Tsd(t = power_theta.index.values, d = np.log(power_theta.values/power_delta.values))
-    #     ratio2 = ratio.rolling(window=10000,win_type='gaussian',center=True,min_periods=1).mean(std=200)
-    #     ratio2 = ratio2.mean()
+    #     ratio = nts.Tsd(t = power_theta.index.values, d = np.log(power_theta.values/power_delta.values).flatten())
+    #     ratio2 = pd.DataFrame(ratio).rolling(window=10000,win_type='gaussian',center=True,min_periods=1).mean(std=200)
+    #     ratio2 = ratio2.mean()[0]
 
     #     if ratio2 < 0:
     #         new_sws_start.append(sws_ep.iloc[i].start)
@@ -264,9 +268,9 @@ for s in datasets:
     total2 = rates.rolling(window=100,win_type='gaussian',center=True,min_periods=1, axis = 0).mean(std=2)
     
     
-    # idx = total2[total2<np.percentile(total2,20)].index.values   
+    idx = total2[total2<np.percentile(total2,20)].index.values   
     # idx = total2[total2<np.percentile(total2,30)].index.values   
-    idx = total2[total2<np.percentile(total2,10)].index.values   
+    # idx = total2[total2<np.percentile(total2,10)].index.values   
     
     tmp2 = [[idx[0]]]
     

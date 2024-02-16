@@ -19,11 +19,14 @@ from Wavelets import MyMorlet as Morlet
 from scipy.stats import kendalltau, pearsonr, wilcoxon, mannwhitneyu
 import seaborn as sns
 
-data_directory = '/media/DataDhruv/Dropbox (Peyrache Lab)/Peyrache Lab Team Folder/Data/AdrianPoSub/###AllPoSub'
+# data_directory = '/media/DataDhruv/Dropbox (Peyrache Lab)/Peyrache Lab Team Folder/Data/AdrianPoSub/###AllPoSub'
+data_directory = '/media/DataDhruv/Dropbox (Peyrache Lab)/Peyrache Lab Team Folder/Data/AdrianPoSub/Dataset_Ver'
 # datasets = np.loadtxt(os.path.join(data_directory,'dataset_test.list'), delimiter = '\n', dtype = str, comments = '#')
-datasets = np.genfromtxt(os.path.join(data_directory,'dataset_Hor_DM.list'), delimiter = '\n', dtype = str, comments = '#')
+# datasets = np.genfromtxt(os.path.join(data_directory,'dataset_Hor_DM.list'), delimiter = '\n', dtype = str, comments = '#')
+datasets = np.genfromtxt(os.path.join(data_directory,'dataset_Ver.list'), delimiter = '\n', dtype = str, comments = '#')
 
-rwpath = '/media/DataDhruv/Dropbox (Peyrache Lab)/Peyrache Lab Team Folder/Projects/PoSub-UPstate/Data'
+# rwpath = '/media/DataDhruv/Dropbox (Peyrache Lab)/Peyrache Lab Team Folder/Projects/PoSub-UPstate/Data'
+rwpath = data_directory
 
 allcoefs_up = []
 allcoefs_up_ex = []
@@ -91,18 +94,18 @@ for s in datasets:
 # ###############################################################################################   
 
     
-    # file = os.path.join(rawpath, name +'.evt.py.dow')
+    file = os.path.join(rawpath, name +'.evt.py.dow')
     # file = os.path.join(rawpath, name +'.evt.py.d3w')
-    file = os.path.join(rawpath, name +'.evt.py.d1w')
+    # file = os.path.join(rawpath, name +'.evt.py.d1w')
     
     if os.path.exists(file):
         tmp = np.genfromtxt(file)[:,0]
         tmp = tmp.reshape(len(tmp)//2,2)/1000
         down_ep = nts.IntervalSet(start = tmp[:,0], end = tmp[:,1], time_units = 's')
     
-    # file = os.path.join(rawpath, name +'.evt.py.upp')
+    file = os.path.join(rawpath, name +'.evt.py.upp')
     # file = os.path.join(rawpath, name +'.evt.py.u3p')
-    file = os.path.join(rawpath, name +'.evt.py.u1p')
+    # file = os.path.join(rawpath, name +'.evt.py.u1p')
     
     if os.path.exists(file):
         tmp = np.genfromtxt(file)[:,0]

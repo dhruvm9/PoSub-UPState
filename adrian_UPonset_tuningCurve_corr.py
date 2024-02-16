@@ -9,6 +9,7 @@ import numpy as np
 import pandas as pd 
 import scipy.io
 import pynapple as nap 
+import nwbmatic as ntm
 import os, sys
 import time 
 import matplotlib.pyplot as plt 
@@ -25,7 +26,7 @@ pvals_fr = []
 
 data_directory = '/media/DataDhruv/Dropbox (Peyrache Lab)/Peyrache Lab Team Folder/Data/AdrianPoSub/###AllPoSub'
 # datasets = np.loadtxt(os.path.join(data_directory,'dataset_test.list'), delimiter = '\n', dtype = str, comments = '#')
-datasets = np.loadtxt(os.path.join(data_directory,'dataset_Hor_DM.list'), delimiter = '\n', dtype = str, comments = '#')
+datasets = np.genfromtxt(os.path.join(data_directory,'dataset_Hor_DM.list'), delimiter = '\n', dtype = str, comments = '#')
 
 rwpath = '/media/DataDhruv/Dropbox (Peyrache Lab)/Peyrache Lab Team Folder/Projects/PoSub-UPstate/Data'
 
@@ -38,7 +39,7 @@ for s in datasets:
     path = os.path.join(data_directory, s)
     rawpath = os.path.join(rwpath,s)
 
-    data = nap.load_session(rawpath, 'neurosuite')
+    data = ntm.load_session(rawpath, 'neurosuite')
     data.load_neurosuite_xml(rawpath)
     spikes = data.spikes  
     epochs = data.epochs
@@ -130,7 +131,7 @@ for s in datasets:
 #%%
         
 #Compute event cross corrs 
-    cc2 = nap.compute_eventcorrelogram(spikes, nap.Tsd(up_ep['start'].values), binsize = 0.005, windowsize = 0.255, ep = up_ep, norm = True)
+    cc2 = nap.compute_eventcorrelogram(spikes, nap.Ts(up_ep['start'].values), binsize = 0.005, windowsize = 0.255, ep = up_ep, norm = True)
     tmp = pd.DataFrame(cc2)
     tmp = tmp.rolling(window=4, win_type='gaussian',center=True,min_periods=1).mean(std = 2)
     dd2 = tmp[0:0.105]

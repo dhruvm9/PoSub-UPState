@@ -13,16 +13,20 @@ from functions import *
 from wrappers import *
 import os, sys
 import pynapple as nap
+import nwbmatic as ntm
 import time 
 import matplotlib.pyplot as plt 
 import seaborn as sns
 from scipy.stats import wilcoxon
 
 
-data_directory = '/media/DataDhruv/Dropbox (Peyrache Lab)/Peyrache Lab Team Folder/Data/AdrianPoSub/###AllPoSub'
-datasets = np.genfromtxt(os.path.join(data_directory,'dataset_Ver_DM.list'), delimiter = '\n', dtype = str, comments = '#')
-rwpath = '/media/DataDhruv/Dropbox (Peyrache Lab)/Peyrache Lab Team Folder/Projects/PoSub-UPstate/Data'
+# data_directory = '/media/DataDhruv/Dropbox (Peyrache Lab)/Peyrache Lab Team Folder/Data/AdrianPoSub/###AllPoSub'
+# datasets = np.genfromtxt(os.path.join(data_directory,'dataset_Ver_DM.list'), delimiter = '\n', dtype = str, comments = '#')
+# rwpath = '/media/DataDhruv/Dropbox (Peyrache Lab)/Peyrache Lab Team Folder/Projects/PoSub-UPstate/Data'
 
+data_directory = '/media/DataDhruv/Dropbox (Peyrache Lab)/Peyrache Lab Team Folder/Data/AdrianPoSub/Dataset_Ver'
+datasets = np.genfromtxt(os.path.join(data_directory,'dataset_Ver.list'), delimiter = '\n', dtype = str, comments = '#')
+rwpath = data_directory
 
 all_down_dur = []
 
@@ -36,7 +40,7 @@ for s in datasets:
 ############################################################################################### 
     # LOADING DATA
 ###############################################################################################
-    data = nap.load_session(rawpath, 'neurosuite')
+    data = ntm.load_session(rawpath, 'neurosuite')
     data.load_neurosuite_xml(rawpath)
     channelorder = data.group_to_channel[0]
     spikes = data.spikes

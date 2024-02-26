@@ -39,6 +39,7 @@ range_DUonset = []
 allDU = []
 
 expfit = []
+linfit = []
 
 for s in datasets:
     print(s)
@@ -197,21 +198,35 @@ for s in datasets:
         def exp_fn(x, m, t, b):
             return m*np.exp(-t*x) + b
         
-        popt, pcov = curve_fit(exp_fn, np.array(indexplot_ex), np.array(depths_keeping_ex)) #p0 = [0, 0.1, 50]
+        def lin_fn(x, m, b):
+            return m*x + b
+        
+        popt, pcov = curve_fit(exp_fn, np.array(indexplot_ex), np.array(depths_keeping_ex), p0 = [800, 1/30, -800], maxfev = 5000)
         m_opt, t_opt, b_opt = popt
+               
+        popt, pcov = curve_fit(lin_fn, np.array(indexplot_ex), np.array(depths_keeping_ex), p0 = [-7, 0], maxfev = 5000)
+        m_opt2, b_opt2 = popt
+        
         
         squaredDiffs = np.square(depths_keeping_ex - exp_fn(np.array(indexplot_ex), m_opt, t_opt, b_opt))
         squaredDiffsFromMean = np.square(depths_keeping_ex - np.mean(depths_keeping_ex))
         rSquared = 1 - np.sum(squaredDiffs) / np.sum(squaredDiffsFromMean)
         expfit.append(rSquared)
+        
+        squaredDiffs = np.square(depths_keeping_ex - lin_fn(np.array(indexplot_ex), m_opt2, b_opt2))
+        squaredDiffsFromMean = np.square(depths_keeping_ex - np.mean(depths_keeping_ex))
+        rSquared = 1 - np.sum(squaredDiffs) / np.sum(squaredDiffsFromMean)
+        linfit.append(rSquared)
+        
                
         x_fitted = np.linspace(np.min(indexplot_ex), np.max(indexplot_ex), len(indexplot_ex))
             
         ###PLOTS
         plt.figure()
         plt.scatter(indexplot_ex, depths_keeping_ex, color = 'cornflowerblue')
-        plt.plot(indexplot_ex, y_est_ex + b_ex, color = 'cornflowerblue')
+        # plt.plot(indexplot_ex, y_est_ex + b_ex, color = 'cornflowerblue')
         plt.plot(x_fitted, exp_fn(x_fitted, m_opt, t_opt, b_opt), '--', color = 'k')
+        plt.plot(x_fitted, lin_fn(x_fitted, m_opt2, b_opt2), '--', color = 'cornflowerblue')
         plt.title('Bin where FR > 50% baseline rate_' + s)
         plt.ylabel('Depth from top of probe (um)')
         plt.yticks([0, -400, -800])
@@ -240,4 +255,11 @@ plt.axhline(0, color = 'silver')
 plt.xticks([0, 0.3],['Linear fit R', 'Exp. R squared'])
 
 
+#%% 
 
+plt.figure()
+plt.scatter(linfit, expfit)
+plt.xlabel('Linear R^2')
+plt.ylabel('Exponential R^2')
+plt.gca().axline((min(min(linfit),min(expfit)),min(min(linfit),min(expfit)) ), slope=1, color = 'silver', linestyle = '--')
+plt.gca().set_box_aspect(1)

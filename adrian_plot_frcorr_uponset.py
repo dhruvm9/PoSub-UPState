@@ -142,4 +142,7 @@ cmap = plt.cm.inferno
 
 plt.figure()
 plt.title('Pooled plot')
+plt.xlabel('UP onset delay (s)')
+plt.xlabel('NREM firing rate (Hz)')
 plt.scatter(onsets, FR, c = cmap(Hpool))
+plt.gca().set_box_aspect(1)

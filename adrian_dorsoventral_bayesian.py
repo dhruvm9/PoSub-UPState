@@ -97,10 +97,10 @@ def my_decoder(tuning_curves, group, ep, bin_size, time_units="s", feature=None)
 
 
 #%% 
-data_directory = '/media/DataDhruv/Dropbox (Peyrache Lab)/Peyrache Lab Team Folder/Data/AdrianPoSub/###AllPoSub'
+data_directory = '/media/adrien/LaCie/PoSub-UPState/Data/###AllPoSub'
 datasets = np.genfromtxt(os.path.join(data_directory,'dataset_Hor_DM.list'), delimiter = '\n', dtype = str, comments = '#')
 
-rwpath = '/media/DataDhruv/Dropbox (Peyrache Lab)/Peyrache Lab Team Folder/Projects/PoSub-UPstate/Data'
+rwpath = '/media/adrien/LaCie/PoSub-UPState/Project/Data'
 
 allerr = []
 
@@ -402,34 +402,36 @@ for s in datasets:
         dshu_hd = np.intersect1d(hd, dorsal_shu.index)
         vshu_hd = np.intersect1d(hd, ventral_shu.index)    
         
-        tc_D_shu = nap.compute_1d_tuning_curves(dorsal_shu[dshu_hd], feature = position['ang'], nb_bins = 61)
-        tc_V_shu = nap.compute_1d_tuning_curves(ventral_shu[vshu_hd], feature = position['ang'], nb_bins = 61)
+        tc_D_shu = nap.compute_1d_tuning_curves(dorsal_shu[dshu_hd], feature = position['ang'].restrict(epochs['wake'].loc[[0]]), nb_bins = 361)
+        tc_V_shu = nap.compute_1d_tuning_curves(ventral_shu[vshu_hd], feature = position['ang'].restrict(epochs['wake'].loc[[0]]), nb_bins = 361)
         
-        tmp1_shu = dorsal_shu[dshu_hd].count(0.025, up_ep).as_dataframe().sum(axis=1)
-        tmp2_shu = ventral_shu[vshu_hd].count(0.025, up_ep).as_dataframe().sum(axis=1)
+        sm_D_shu = smoothAngularTuningCurves(tc_D_shu, sigma=3)
+        sm_V_shu = smoothAngularTuningCurves(tc_V_shu, sigma=3)
+        
+        tmp1_shu = dorsal_shu[dshu_hd].count(0.05, up_ep).as_dataframe().sum(axis=1)
+        tmp2_shu = ventral_shu[vshu_hd].count(0.05, up_ep).as_dataframe().sum(axis=1)
         
         tmp1_shu = tmp1_shu[tmp1_shu >= 5]
         tmp2_shu = tmp2_shu[tmp2_shu >= 5]
         
         active_up_shu = np.intersect1d(tmp1_shu.index.values, tmp2_shu.index.values)
         
-        d_D_shu, _ = nap.decode_1d(tuning_curves = tc_D_shu,  group = dorsal_shu[dshu_hd], ep = up_ep, bin_size = 0.025, 
-                                               feature = position['ang'])
+        d_D_shu, _ = nap.decode_1d(tuning_curves = sm_D_shu,  group = dorsal_shu[dshu_hd], ep = up_ep, bin_size = 0.05, 
+                                               feature = position['ang'].restrict(epochs['wake'].loc[[0]]))
         
-        d_V_shu, _ = nap.decode_1d(tuning_curves = tc_V_shu,  group = ventral_shu[vshu_hd], ep = up_ep, bin_size = 0.025, 
-                                               feature = position['ang'])
+        d_V_shu, _ = nap.decode_1d(tuning_curves = sm_V_shu,  group = ventral_shu[vshu_hd], ep = up_ep, bin_size = 0.05, 
+                                               feature = position['ang'].restrict(epochs['wake'].loc[[0]]))
         
         decoded_D_shu = nap.Ts(active_up_shu).value_from(d_D_shu)
         decoded_V_shu = nap.Ts(active_up_shu).value_from(d_V_shu)
         
-        lin_error_shu = np.abs(decoded_D_shu.values - decoded_V_shu.values)
-                
-        decode_error_shu =  np.minimum((2*np.pi - abs(lin_error_shu)), abs(lin_error_shu))
+                     
+        decode_error_shu =  np.abs(pycircstat.cdiff(decoded_D_shu.values, decoded_V_shu.values))
         derr_shu.append(np.mean(decode_error_shu))
         
-        bins = np.linspace(0, np.pi, 61)    
-        relcounts_all,_ = np.histogram(derr_shu, bins)     
-        p_rel = relcounts_all/sum(relcounts_all)
+        # bins = np.linspace(0, np.pi, 61)    
+        # relcounts_all,_ = np.histogram(derr_shu, bins)     
+        # p_rel = relcounts_all/sum(relcounts_all)
         np.save(rawpath + '/' + s + '_shuffle.npy', np.array(derr_shu))
         
 #%% Plot for each session shuffles and data 

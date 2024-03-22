@@ -9,6 +9,7 @@ import numpy as np
 import pandas as pd 
 import scipy.io
 import pynapple as nap 
+import nwbmatic as ntm
 import os, sys
 import time 
 import matplotlib.pyplot as plt 
@@ -47,13 +48,15 @@ depthpvals = []
 timingcorrs = []
 timingpvals = [] 
 
+N_ex = []
+
 for s in datasets:
     print(s)
     name = s.split('/')[-1]
     path = os.path.join(data_directory, s)
     rawpath = os.path.join(rwpath,s)
 
-    data = nap.load_session(rawpath, 'neurosuite')
+    data = ntm.load_session(rawpath, 'neurosuite')
     data.load_neurosuite_xml(rawpath)
     spikes = data.spikes  
     epochs = data.epochs
@@ -93,6 +96,8 @@ for s in datasets:
     for i in range(len(spikes)):
         if celltype['hd'][i] == 1 and celltype['gd'][i] == 1:
             hd.append(i)
+
+    N_ex.append(len(pyr))    
 
 # ############################################################################################### 
 #     # LOAD UP AND DOWN STATE, NEW SWS AND NEW WAKE EPOCHS
@@ -135,7 +140,7 @@ for s in datasets:
 ###############################################################################################  
       
 ## Peak firing       
-    cc2 = nap.compute_eventcorrelogram(spikes, nap.Tsd(up_ep['start'].values), binsize = 0.005, windowsize = 0.255, ep = up_ep, norm = True)
+    cc2 = nap.compute_eventcorrelogram(spikes, nap.Ts(up_ep['start']), binsize = 0.005, windowsize = 0.255, ep = up_ep, norm = True)
     tmp = pd.DataFrame(cc2)
     tmp = tmp.rolling(window=8, win_type='gaussian',center=True,min_periods=1).mean(std = 2)
     # dd2 = tmp[0:0.255]

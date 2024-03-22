@@ -91,11 +91,11 @@ for s in datasets:
     
 #%% COMPUTE FIRING RATE IN NREM
 
-    NREM_fr = spikes.restrict(nap.IntervalSet(new_sws_ep))._metadata['rate']
+    NREM_fr = spikes.restrict(new_sws_ep)._metadata['rate']
  
 #%% COMPUTE EVENT CROSS CORRS 
 
-    cc2 = nap.compute_eventcorrelogram(spikes, nap.Ts(up_ep['start'].values), binsize = 0.005, windowsize = 0.255, ep = up_ep, norm = True)
+    cc2 = nap.compute_eventcorrelogram(spikes, nap.Ts(up_ep['start']), binsize = 0.005, windowsize = 0.255, ep = up_ep, norm = True)
     tmp = pd.DataFrame(cc2)
     tmp = tmp.rolling(window=8, win_type='gaussian',center=True,min_periods=1).mean(std = 2)
     dd2 = tmp[0:0.155]  
@@ -128,9 +128,9 @@ for s in datasets:
     H = 1 - depths_keeping_ex/(min(depths_keeping_ex))
     cmap = plt.cm.inferno
     
-    plt.figure()
-    plt.title(s)
-    plt.scatter(sess_uponset, NREM_fr_ex, c = cmap(H))
+    # plt.figure()
+    # plt.title(s)
+    # plt.scatter(sess_uponset, NREM_fr_ex, c = cmap(H))
     
 #%% Pooled plot 
 
@@ -140,9 +140,14 @@ rd, pd = pearsonr(onsets, Depth)
 Hpool = 1 - Depth/(min(Depth))
 cmap = plt.cm.inferno
 
+rng = np.random.normal(0, 0.005, size = len(onsets))
+
+jitter_onsets = onsets + rng
+
 plt.figure()
 plt.title('Pooled plot')
 plt.xlabel('UP onset delay (s)')
-plt.xlabel('NREM firing rate (Hz)')
-plt.scatter(onsets, FR, c = cmap(Hpool))
+plt.yscale('log')
+plt.ylabel('NREM firing rate (Hz)')
+plt.scatter(jitter_onsets, FR, c = cmap(Hpool))
 plt.gca().set_box_aspect(1)

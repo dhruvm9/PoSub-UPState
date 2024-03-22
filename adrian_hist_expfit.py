@@ -257,9 +257,9 @@ plt.xticks([0, 0.3],['Linear fit R', 'Exp. R squared'])
 
 #%% 
 
-plt.figure()
-plt.scatter(linfit, expfit)
-plt.xlabel('Linear R^2')
-plt.ylabel('Exponential R^2')
-plt.gca().axline((min(min(linfit),min(expfit)),min(min(linfit),min(expfit)) ), slope=1, color = 'silver', linestyle = '--')
-plt.gca().set_box_aspect(1)
+# plt.figure()
+# plt.scatter(linfit, expfit)
+# plt.xlabel('Linear R^2')
+# plt.ylabel('Exponential R^2')
+# plt.gca().axline((min(min(linfit),min(expfit)),min(min(linfit),min(expfit)) ), slope=1, color = 'silver', linestyle = '--')
+# plt.gca().set_box_aspect(1)

@@ -9,6 +9,7 @@ import numpy as np
 import pandas as pd 
 import scipy.io
 import pynapple as nap 
+import nwbmatic as ntm
 import os, sys
 import time 
 import matplotlib.pyplot as plt 
@@ -39,6 +40,7 @@ peaktiming = []
 
 hdcells = []
 allcells = [] 
+N_ex = []
 
 range_uponset_hdc = []
 range_UDonset_hdc = []
@@ -50,7 +52,7 @@ for s in datasets:
     path = os.path.join(data_directory, s)
     rawpath = os.path.join(rwpath,s)
 
-    data = nap.load_session(rawpath, 'neurosuite')
+    data = ntm.load_session(rawpath, 'neurosuite')
     data.load_neurosuite_xml(rawpath)
     spikes = data.spikes  
     epochs = data.epochs
@@ -98,6 +100,7 @@ for s in datasets:
         
     hdcells.append(len(hd))
     allcells.append(len(spikes))
+    N_ex.append(len(pyr))
     
 # ############################################################################################### 
 #     # LOAD UP AND DOWN STATE, NEW SWS AND NEW WAKE EPOCHS
@@ -134,7 +137,7 @@ for s in datasets:
     # COMPUTE EVENT CROSS CORRS
 ###############################################################################################  
     
-    cc2 = nap.compute_eventcorrelogram(spikes, nap.Tsd(down_ep['start'].values), binsize = 0.005, windowsize = 0.255, ep = up_ep, norm = True)    
+    cc2 = nap.compute_eventcorrelogram(spikes, nap.Ts(down_ep['start']), binsize = 0.005, windowsize = 0.255, ep = up_ep, norm = True)    
     dd2 = cc2[-0.25:0.25]
     tmp2 = pd.DataFrame(dd2)
     tmp2 = tmp2.rolling(window = 8, win_type='gaussian',center=True,min_periods=1).mean(std = 2)
@@ -166,7 +169,7 @@ for s in datasets:
 #%% 
 
 ## Peak firing       
-    cc2 = nap.compute_eventcorrelogram(spikes, nap.Tsd(up_ep['start'].values), binsize = 0.005, windowsize = 0.255, ep = up_ep, norm = True)
+    cc2 = nap.compute_eventcorrelogram(spikes, nap.Ts(up_ep['start']), binsize = 0.005, windowsize = 0.255, ep = up_ep, norm = True)
     tmp = pd.DataFrame(cc2)
     tmp = tmp.rolling(window=8, win_type='gaussian',center=True,min_periods=1).mean(std = 2)
     dd2 = tmp[0:0.155]  
@@ -184,7 +187,9 @@ for s in datasets:
                     
         for i in range(len(ee.columns)):
             a = np.where(ee.iloc[:,i] > 0.5)
+            
             if len(a[0]) > 0:
+                             
               tokeep.append(ee.columns[i])  
               peaks_keeping_ex.append(ee.iloc[:,i].max())
               alldepths.append(depth.flatten()[ee.columns[i]])
@@ -195,11 +200,14 @@ for s in datasets:
               res = ee.iloc[:,i].index[a]
               sess_uponset.append(res[0])
               uponset_hdc.append(res[0])
+            
+            else: print(i)
               
     range_uponset_hdc.append(np.std(sess_uponset))
     range_UDonset_hdc.append(np.std(sess_UDonset))  
     
     allPETH = pd.concat([allPETH, ee[tokeep]], axis = 1)
+    print(len(ee[tokeep].columns))
 
 #%% Isomap 
 

@@ -14,10 +14,10 @@ import seaborn as sns
 
 #%% 
 
-data_directory = '/media/adrien/LaCie/PoSub-UPState/Data/###AllPoSub'
+data_directory = '/media/dhruv/LaCie1/PoSub-UPState/Data/###AllPoSub' #'/media/adrien/LaCie/PoSub-UPState/Data/###AllPoSub'
 datasets = np.genfromtxt(os.path.join(data_directory,'dataset_Hor_DM.list'), delimiter = '\n', dtype = str, comments = '#')
 
-rwpath = '/media/adrien/LaCie/PoSub-UPState/Project/Data'
+rwpath = '/media/dhruv/LaCie1/PoSub-UPState/Project/Data' #'/media/adrien/LaCie/PoSub-UPState/Project/Data'
 
 mean_decoding_error = np.load(rwpath + '/' + '_bayes_err.npy')
 

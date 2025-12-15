@@ -12,6 +12,7 @@ import scipy.io
 from functions import *
 from wrappers import *
 import os, sys
+import nwbmatic as ntm
 import pynapple as nap
 import time 
 import matplotlib.pyplot as plt 
@@ -34,7 +35,7 @@ name = s.split('/')[-1]
 path = os.path.join(data_directory, s)
 rawpath = os.path.join(rwpath,s)
 
-data = nap.load_session(rawpath, 'neurosuite')
+data = ntm.load_session(rawpath, 'neurosuite')
 data.load_neurosuite_xml(rawpath)
 spikes = data.spikes  
 epochs = data.epochs
@@ -113,11 +114,11 @@ idx = total2.threshold(np.percentile(total2.values,20),'below')
 plt.figure() 
 plt.subplot(311)       
 plt.plot(lfpsig.restrict(per))
-[plt.axvspan(x,y, facecolor = 'g', alpha = 0.5) for x,y in zip(down_ep.loc[691:696]['start'].values, down_ep.loc[691:696]['end'].values)]
+[plt.axvspan(x,y, facecolor = 'g', alpha = 0.5) for x,y in zip(down_ep['start'][691:696], down_ep['end'][691:696])]
 plt.subplot(312)
 for i,n in enumerate(spikes.keys()):
     plt.plot(spikes[n].restrict(per).fillna(i+35), '|', color = 'k')
-[plt.axvspan(x,y, facecolor = 'g', alpha = 0.5) for x,y in zip(down_ep.loc[691:696]['start'].values, down_ep.loc[691:696]['end'].values)]
+[plt.axvspan(x,y, facecolor = 'g', alpha = 0.5) for x,y in zip(down_ep['start'][691:696], down_ep['end'][691:696])]
 plt.plot(total2.restrict(per), color = 'dimgray', alpha = 0.5)
 plt.axhline(np.percentile(total2.values,20), zorder = 5, color = 'k')
 plt.fill_between(total2.restrict(per).index.values, total2.restrict(per), color = 'dimgray', alpha = 0.5)
@@ -126,7 +127,7 @@ plt.plot((lfp_filt_delta.restrict(per)*0.01) + 55, zorder = 5, linewidth = 2)
 plt.plot(total2.restrict(per), color = 'dimgray', alpha = 0.5)
 plt.fill_between(total2.restrict(per).index.values, total2.restrict(per), color = 'dimgray', alpha = 0.5)
 plt.plot((lfpsig.restrict(per)*0.01) + 55, color = 'k')
-[plt.axvspan(x,y, facecolor = 'g', alpha = 0.5) for x,y in zip(down_ep.loc[691:696]['start'].values, down_ep.loc[691:696]['end'].values)]
+[plt.axvspan(x,y, facecolor = 'g', alpha = 0.5) for x,y in zip(down_ep['start'][691:696], down_ep['end'][691:696])]
 
 # plt.plot(lfp_filt_delta[peaks.restrict(per).index.values],'o')
 # [plt.axvspan(x,y, facecolor = 'g', alpha = 0.5) for x,y in zip(down_ep.loc[691:696]['start'].values, down_ep.loc[691:696]['end'].values)]

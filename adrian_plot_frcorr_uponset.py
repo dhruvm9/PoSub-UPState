@@ -123,7 +123,7 @@ for s in datasets:
         FR.extend(NREM_fr_ex)
         onsets.extend(sess_uponset)
                 
-#%% Organize firingrate, UP onset delay and depth 
+#%% Organize firing rate, UP onset delay and depth 
 
     H = 1 - depths_keeping_ex/(min(depths_keeping_ex))
     cmap = plt.cm.inferno
